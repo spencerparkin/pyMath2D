@@ -12,7 +12,7 @@ class Circle(object):
     def Copy(self):
         return Circle(self.center.Copy(), self.radius)
     
-    def EncompassesPoint(self, point, epsilon=1e-7):
+    def ContainsPoint(self, point, epsilon=1e-7):
         return True if (point - self.center).Length() <= self.radius + epsilon else False
     
     def Area(self):

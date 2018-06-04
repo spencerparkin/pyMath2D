@@ -3,24 +3,22 @@
 import copy
 
 from math2d_triangle import Triangle
+from math2d_line_segment import LineSegment
 
 class Polygon(object):
-    # These are lists of points with CCW winding in the plane.  It is a bit hard to
-    # rigorously define exactly what is and is not a valid polygon.
-    # Intuitively, the polygon must wrap a non-self-overlapping area of the plane,
-    # and not self-intersect itself.  We do, however, allow them to be self-tangential.
-    # You might say that this is a special case of the sub-region class.  Specifically,
-    # these are sub-regions without any holes.  Unlike sub-regions, however, we must
-    # enforce a CCW winding in the plane.
+    # These are lists of points with CCW winding in the plane.
+    # The path of the polygon's permimeter must not cross itself, but we do allow polygons to be self-tangential.
+    # If the vertex list does not satisfy these requirements, then any result of any method is left undefined.
     def __init__(self):
         self.vertex_list = []
+        self.mesh = None
     
     def Copy(self):
         return copy.deepcopy(self)
     
     def Tessellate(self):
         from math2d_tri_mesh import TriangleMesh
-        mesh = TriangleMesh()
+        self.mesh = TriangleMesh()
         polygon = self.Copy()
         while len(polygon.vertex_list) > 2:
             found = False
@@ -37,12 +35,11 @@ class Polygon(object):
                     pass # What else?
                     found = True
                 if found:
-                    mesh.AddTriangle(triangle)
+                    self.mesh.AddTriangle(triangle)
                     del polygon.vertex_list[(i + 1) % len(polygon.vertex_list)]
                     break
             if not found:
                 raise Exception('Failed to tessellate polygon.')
-        return mesh
     
     def IsConvex(self):
         return not self.IsConcave()
@@ -55,13 +52,10 @@ class Polygon(object):
         pass
     
     def Area(self):
-        mesh = self.Tesselate()
-        return mesh.Area()
+        return self.mesh.Area()
     
     def ContainsPoint(self, point, epsilon=1e-7):
-        # This shouldn't be called repeatedly on a static polygon.
-        mesh = self.Tessellate()
-        return mesh.ContainsPoint(point, epsilon)
+        return self.mesh.ContainsPoint(point, epsilon)
     
     def Transform(self, transform):
         for i, point in enumerate(self.vertex_list):
@@ -72,6 +66,12 @@ class Polygon(object):
     
     def ReverseWinding(self):
         self.vertex_list = [point for point in reversed(self.vertex_list)]
+    
+    def GenerateLineSegments(self):
+        for i in range(len(self.vertex_list)):
+            j = (i + 1) % len(self.vertex_list)
+            line_segment = LineSegment(self.vertex_list[i], self.vertex_list[j])
+            yield line_segment
     
     def Render(self):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, GL_LINE_LOOP

@@ -18,6 +18,7 @@ class Triangle(object):
     def Area(self):
         # Note that a triangle will have negative area if it is not wound CCW in the plane.
         area = (self.vertex_b - self.vertex_a).Cross(self.vertex_c - self.vertex_a) / 2.0
+        return area
     
     def Vertex(self, i):
         return [self.vertex_a, self.vertex_b, self.vertex_c][i]
