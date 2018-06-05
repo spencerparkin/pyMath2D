@@ -1,6 +1,7 @@
 # math2d_tri_mesh.py
 
 import copy
+import random
 
 from math2d_triangle import Triangle
 
@@ -119,9 +120,14 @@ class TriangleMesh(object):
         return None
     
     def Render(self, tri_strip_sequence=None):
+        from OpenGL.GL import glColor3f
         if tri_strip_sequence is None:
             for triple in self.triangle_list:
                 triangle = self.MakeTriangleFromTriple(triple)
+                r = random.random()
+                g = random.random()
+                b = random.random()
+                glColor3f(r, g, b)
                 triangle.Render()
         else:
             from OpenGL.GL import glBegin, glEnd, glVertex2f, GL_TRIANGLE_STRIP

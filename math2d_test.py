@@ -5,10 +5,24 @@ import sys
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from PyQt5 import QtGui, QtCore, QtWidgets
+from math2d_vector import Vector
+from math2d_polygon import Polygon
 
 class Window(QtGui.QOpenGLWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.polygon = Polygon()
+        self.polygon.vertex_list.append(Vector(-1.0, -1.0))
+        self.polygon.vertex_list.append(Vector(3.0, 3.0))
+        self.polygon.vertex_list.append(Vector(3.5, -2.0))
+        self.polygon.vertex_list.append(Vector(3.0, -2.0))
+        self.polygon.vertex_list.append(Vector(4.0, -2.6))
+        self.polygon.vertex_list.append(Vector(4.1, 5.0))
+        self.polygon.vertex_list.append(Vector(-5.0, 1.0))
+        self.polygon.vertex_list.append(Vector(-5.5, 3.5))
+        self.polygon.vertex_list.append(Vector(-6.5, 0.0))
+        self.polygon.vertex_list.append(Vector(-1.5, -5.0))
+        self.polygon.Tessellate()
     
     def initializeGL(self):
         glShadeModel(GL_FLAT)
@@ -35,13 +49,10 @@ class Window(QtGui.QOpenGLWindow):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         
-        glBegin(GL_QUADS)
-        glColor3f(1.0, 0.0, 0.0)
-        glVertex2f(-5.0, -5.0)
-        glVertex2f(5.0, -5.0)
-        glVertex2f(5.0, 5.0)
-        glVertex2f(-5.0, 5.0)
-        glEnd()
+        glColor3f(1.0, 1.0, 1.0)
+        self.polygon.Render()
+        
+        self.polygon.mesh.Render()
         
         glFlush()
 
@@ -53,6 +64,7 @@ if __name__ == '__main__':
     app = QtGui.QGuiApplication(sys.argv)
     
     win = Window()
+    win.resize(640, 480)
     win.show()
     
     sys.exit(app.exec_())

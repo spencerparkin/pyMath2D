@@ -26,20 +26,21 @@ class Polygon(object):
         while len(polygon.vertex_list) > 2:
             found = False
             for i in range(len(polygon.vertex_list)):
+                j = (i + 1) % len(polygon.vertex_list)
+                k = (i + 2) % len(polygon.vertex_list)
                 vertex_a = polygon.vertex_list[i]
-                vertex_b = polygon.vertex_list[(i + 1) % len(polygon.vertex_list)]
-                vertex_c = polygon.vertex_list[(i + 2) % len(polygon.vertex_list)]
+                vertex_b = polygon.vertex_list[j]
+                vertex_c = polygon.vertex_list[k]
                 triangle = Triangle(vertex_a, vertex_b, vertex_c)
                 if triangle.Area() > 0.0:
                     for vertex in self.vertex_list:
-                        if triangle.ContainsPoint(vertex):
+                        if triangle.ContainsPoint(vertex) and not triangle.ContainsPointOnBorder(vertex):
                             break
-                else:
-                    pass # What else?
-                    found = True
+                    else:
+                        found = True
                 if found:
                     self.mesh.AddTriangle(triangle)
-                    del polygon.vertex_list[(i + 1) % len(polygon.vertex_list)]
+                    del polygon.vertex_list[j]
                     break
             if not found:
                 raise Exception('Failed to tessellate polygon.')

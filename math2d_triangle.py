@@ -7,6 +7,7 @@ from math2d_vector import Vector
 from math2d_line_segment import LineSegment
 
 class Triangle(object):
+    # If the 3 points are not ordered CCW in the plane, then the result of many methods is left undefined.
     def __init__(self, vertex_a=None, vertex_b=None, vertex_c=None):
         self.vertex_a = vertex_a if vertex_a is not None else Vector(0.0, 0.0)
         self.vertex_b = vertex_b if vertex_a is not None else Vector(0.0, 0.0)
@@ -23,19 +24,16 @@ class Triangle(object):
     def Vertex(self, i):
         return [self.vertex_a, self.vertex_b, self.vertex_c][i]
     
-    def ContainsPoint(self, point, epsilon=1e-7):
-        # Note that our correctness here depends on a CCW ordering of the vertices in the plane.
-        for i in range(3):
-            if self.Vertex(i).IsPoint(point, epsilon):
-                return True
+    def ContainsPointOnBorder(self, point, epsilon=1e-7):
         for i in range(3):
             j = (i + 1) % 3
             if LineSegment(self.Vertex(i), self.Vertex(j)).ContainsPoint(point, epsilon):
                 return True
-        # The following check is really all that is necessary, but the previous
-        # two checks allow us to approximate the result.  We could approximate
-        # the result here too by using our espilon instead of zero, but that might
-        # not be as well defined as what we're doing to approximate above.
+        return False
+    
+    def ContainsPoint(self, point, epsilon=1e-7):
+        if self.ContainsPointOnBorder(point, epsilon):
+            return True
         for i in range(3):
             j = (i + 1) % 3
             if Triangle(self.Vertex(i), self.Vertex(j), point).Area() < 0.0:
