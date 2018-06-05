@@ -46,6 +46,29 @@ class Window(QtGui.QOpenGLWindow):
 
         self.region = Region()
         self.region.sub_region_list.append(sub_region)
+
+        self.cut_region = Region()
+        
+        sub_region = SubRegion()
+        sub_region.polygon.vertex_list.append(Vector(-1.0, -5.0))
+        sub_region.polygon.vertex_list.append(Vector(5.0, -5.0))
+        sub_region.polygon.vertex_list.append(Vector(5.0, 4.0))
+        sub_region.polygon.vertex_list.append(Vector(-1.0, 4.0))
+        self.cut_region.sub_region_list.append(sub_region)
+
+        sub_region = SubRegion()
+        sub_region.polygon.vertex_list.append(Vector(-6.0, 1.0))
+        sub_region.polygon.vertex_list.append(Vector(-3.0, 1.0))
+        sub_region.polygon.vertex_list.append(Vector(-3.0, 4.0))
+        sub_region.polygon.vertex_list.append(Vector(-6.0, 4.0))
+        self.cut_region.sub_region_list.append(sub_region)
+
+        sub_region = SubRegion()
+        sub_region.polygon.vertex_list.append(Vector(-6.0, -5.0))
+        sub_region.polygon.vertex_list.append(Vector(-3.0, -5.0))
+        sub_region.polygon.vertex_list.append(Vector(-3.0, -3.0))
+        sub_region.polygon.vertex_list.append(Vector(-6.0, -3.0))
+        self.cut_region.sub_region_list.append(sub_region)
         
         self.test_polygon = None
     
@@ -77,6 +100,9 @@ class Window(QtGui.QOpenGLWindow):
         glColor3f(1.0, 1.0, 1.0)
         self.region.Render()
         
+        glColor3f(1.0, 0.0, 0.0)
+        self.cut_region.Render()
+        
         if self.test_polygon is not None:
             self.test_polygon.mesh.Render()
         
@@ -88,8 +114,8 @@ class Window(QtGui.QOpenGLWindow):
     def mousePressEvent(self, event):
         button = event.button()
         if button == QtCore.Qt.LeftButton:
-            self.test_polygon = self.region.sub_region_list[0].GeneratePolygon()
-            self.test_polygon.Tessellate()
+            pass
+            # TODO: The first thing to test is just creating a graph that merges the region and cut-region together.
 
 if __name__ == '__main__':
     
