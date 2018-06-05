@@ -7,22 +7,47 @@ from OpenGL.GLU import *
 from PyQt5 import QtGui, QtCore, QtWidgets
 from math2d_vector import Vector
 from math2d_polygon import Polygon
+from math2d_region import Region, SubRegion
 
 class Window(QtGui.QOpenGLWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.polygon = Polygon()
-        self.polygon.vertex_list.append(Vector(-1.0, -1.0))
-        self.polygon.vertex_list.append(Vector(3.0, 3.0))
-        self.polygon.vertex_list.append(Vector(3.5, -2.0))
-        self.polygon.vertex_list.append(Vector(3.0, -2.0))
-        self.polygon.vertex_list.append(Vector(4.0, -2.6))
-        self.polygon.vertex_list.append(Vector(4.1, 5.0))
-        self.polygon.vertex_list.append(Vector(-5.0, 1.0))
-        self.polygon.vertex_list.append(Vector(-5.5, 3.5))
-        self.polygon.vertex_list.append(Vector(-6.5, 0.0))
-        self.polygon.vertex_list.append(Vector(-1.5, -5.0))
-        self.polygon.Tessellate()
+        
+        sub_region = SubRegion()
+        sub_region.polygon.vertex_list.append(Vector(-5.0, -4.0))
+        sub_region.polygon.vertex_list.append(Vector(4.0, -4.0))
+        sub_region.polygon.vertex_list.append(Vector(4.0, 3.0))
+        sub_region.polygon.vertex_list.append(Vector(-5.0, 3.0))
+        
+        hole = Polygon()
+        hole.vertex_list.append(Vector(-4.0, -3.0))
+        hole.vertex_list.append(Vector(3.0, -3.0))
+        hole.vertex_list.append(Vector(3.0, -2.0))
+        hole.vertex_list.append(Vector(-3.0, -2.0))
+        hole.vertex_list.append(Vector(-3.0, 1.0))
+        hole.vertex_list.append(Vector(3.0, 1.0))
+        hole.vertex_list.append(Vector(3.0, 2.0))
+        hole.vertex_list.append(Vector(-4.0, 2.0))
+        sub_region.hole_list.append(hole)
+        
+        hole = Polygon()
+        hole.vertex_list.append(Vector(-2.0, -1.0))
+        hole.vertex_list.append(Vector(0.0, -1.0))
+        hole.vertex_list.append(Vector(0.0, 0.0))
+        hole.vertex_list.append(Vector(-2.0, 0.0))
+        sub_region.hole_list.append(hole)
+        
+        hole = Polygon()
+        hole.vertex_list.append(Vector(1.0, -1.0))
+        hole.vertex_list.append(Vector(3.0, -1.0))
+        hole.vertex_list.append(Vector(3.0, 0.0))
+        hole.vertex_list.append(Vector(1.0, 0.0))
+        sub_region.hole_list.append(hole)
+
+        self.region = Region()
+        self.region.sub_region_list.append(sub_region)
+        
+        self.test_polygon = None
     
     def initializeGL(self):
         glShadeModel(GL_FLAT)
@@ -37,7 +62,7 @@ class Window(QtGui.QOpenGLWindow):
         height = viewport[3]
         
         aspect_ratio = float(width) / float(height)
-        extent = 10.0
+        extent = 6.0
         
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
@@ -50,14 +75,21 @@ class Window(QtGui.QOpenGLWindow):
         glLoadIdentity()
         
         glColor3f(1.0, 1.0, 1.0)
-        self.polygon.Render()
+        self.region.Render()
         
-        self.polygon.mesh.Render()
+        if self.test_polygon is not None:
+            self.test_polygon.mesh.Render()
         
         glFlush()
 
     def resizeGL(self, width, height):
         glViewport(0, 0, width, height)
+
+    def mousePressEvent(self, event):
+        button = event.button()
+        if button == QtCore.Qt.LeftButton:
+            self.test_polygon = self.region.sub_region_list[0].GeneratePolygon()
+            self.test_polygon.Tessellate()
 
 if __name__ == '__main__':
     
