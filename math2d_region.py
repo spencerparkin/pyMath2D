@@ -3,6 +3,7 @@
 import copy
 
 from math2d_polygon import Polygon
+from math2d_line_segment import LineSegment
 
 class Region(object):
     # These are simply collections of sub-regions.  The sub-regions are assumed
@@ -46,12 +47,57 @@ class SubRegion(object):
     def GeneratePolygon(self):
         # Return a polygon covering the same area as this sub-region.
         # If there are holes in this polygon, then the returned polygon
-        # will necessarily be self-tangential.
-        # TODO: We may want to make use of the planar graph here.  In any case,
-        #       What we're trying to do is coalesce all the holes and the perimeter
-        #       into one CCW loop.  Any two holes or any hole and the perimeter may
-        #       possibly be coalesced into a single hole or an expansion of the perimeter.
-        pass
+        # will necessarily be self-tangential.  Note that we're not necessarily
+        # finding the best polygon according to some sort of metric.  We're
+        # just finding the first one we can find that works.
+        sub_region = self.Copy()
+        while len(sub_region.hole_list) > 0:
+            # Try to merge a hole with the perimeter to expand the perimeter.
+            for i, hole in enumerate(self.hole_list):
+                polygon = sub_region._MergePolygons(self.polygon, hole, True)
+                if polygon is not None:
+                    del sub_region.hole_list[i]
+                    sub_region.polygon = polygon
+                    break
+        
+            # Try to merge a hole with some other hole to make a new hole.
+            for i in range(len(sub_region.hole_list)):
+                hole_a = sub_region.hole_list[i]
+                for j in range(i + 1, len(self.hole_list)):
+                    hole_b = sub_region.hole_list[j]
+                    polygon = sub_region._MergePolygons(hole_a, hole_b, False)
+                    if polygon is not None:
+                        del sub_region.hole_list[j] # Must delete j before i since j > i.
+                        del sub_region.hole_list[i]
+                        sub_region.hole_list.append(polygon)
+                        break
+    
+        return sub_region.polygon
+
+    def _MergePolygons(self, polygon_a, polygon_b, b_contains_a):
+        for i, point_a in enumerate(polygon_a.vertex_list):
+            for j, point_b in enumerate(polygon_b.vertex_list):
+                line_segment = LineSegment(point_a, point_b)
+                if not self._NonTriviallyCollidesWithSegment(line_segment):
+                    polygon = Polygon()
+                    for k in range(len(polygon_a.vertex_list)):
+                        polygon.vertex_list.append(polygon_a.vertex_list[(i + k) % len(polygon_a.vertex_list)])
+                    q = -1 if b_contains_a else 1
+                    for k in range(len(polygon_b.vertex_list)):
+                        polygon.vertex_list.append(polygon_b.vertex_list[(j + q * k) % len(polygon_b.vertex_list)])
+                    return polygon
+    
+    def _NonTriviallyCollidesWithSegment(self, line_segment):
+        for edge in self.polygon.GenerateLineSegments():
+            if line_segment.IntersectWith(edge) is not None:
+                if not line_segment.IsEndPoint(edge.point_a) and not line_segment.IsEndPoint(edge.point_b):
+                    return True
+        for hole in self.hole_list:
+            for edge in hole.GenerateLineSegments():
+                if line_segment.IntersectWith(edge) is not None:
+                    if not line_segment.IsEndPoint(edge.point_a) and not line_segment.IsEndPoint(edge.point_b):
+                        return True
+        return False
 
     def Tessellate(self):
         # If you want a triangle mesh for the sub-region, then
