@@ -53,3 +53,15 @@ class Vector(object):
     
     def Reject(self, normal):
         return self - self.Project(normal)
+    
+    def AngleBetween(self, vector):
+        normal_vector_a = self.Copy()
+        normal_vector_a.Normalize()
+        normal_vector_b = vector.Copy()
+        normal_vector_b.Normalize()
+        angle = math.acos(normal_vector_a.Dot(normal_vector_b))
+        return angle
+
+    def SignedAngleBetween(self, vector):
+        angle = self.AngleBetween(vector)
+        return angle if self.Cross(vector) >= 0.0 else -angle

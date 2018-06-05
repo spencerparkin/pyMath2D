@@ -1,6 +1,7 @@
 # math2d_planar_graph.py
 
 import copy
+import math
 
 from math2d_line_segment import LineSegment
 
@@ -104,9 +105,8 @@ class PlanarGraph(object):
             else:
                 self.edge_list.append(new_edge)
     
-    def ReadCutRegions(self, region):
-        # Note that this is a destructive algorithm in that it will modify this graph.
-        # To preserve a graph, operate on a copy of the graph.
+    def ApplyCuts(self, region):
+        # Turn all the cuts into bi-directional borders.
         while True:
             for i, edge in enumerate(self.edge_list):
                 if edge[2] == PlanarGraphEdgeLabel.CUT:
@@ -118,12 +118,90 @@ class PlanarGraph(object):
             if region.ContainsPoint(edge_segment.Lerp(0.5)):
                 self.edge_list.append((edge[0], edge[1], PlanarGraphEdgeLabel.REGION_BORDER))
                 self.edge_list.append((edge[1], edge[0], PlanarGraphEdgeLabel.REGION_BORDER))
-        pass
-        # TODO: We can now remove edges as we read-off loops.  Note that holes are CW loops,
-        #       while perimeters are CCW loops.  Collect all perimeters and holes, then
-        #       figure out which holes go inside which perimeters.  (Perimeters will tessellate,
-        #       while holes will not.  This is how we can discern CCW versus CW.)  Which of the
-        #       returned sub-regions is inside or outside the cut-region is a problem for the caller.
+                
+        # Now go read-off all the perimeter and hole polygons.
+        from math2d_polygon import Polygon
+        perimeter_list = []
+        hole_list = []
+        while True:
+            for edge in self.edge_list:
+                if edge[2] == PlanarGraphEdgeLabel.REGION_BORDER:
+                    break
+            else:
+                break
+            polygon = Polygon()
+            cycle_list = self.FindCycleContainingEdge(edge, True)
+            polygon.vertex_list = [self.vertex_list[edge[0]] for edge in cycle_list]
+            if polygon.IsWoundCCW():
+                polygon.Tessellate()
+                perimeter_list.append(polygon)
+            else:
+                cycle_list = self.FindCycleContainingEdge(edge, False)
+                polygon.vertex_list = [self.vertex_list[edge[0]] for edge in cycle_list]
+                if polygon.IsWoundCW():
+                    polygon.ReverseWinding()
+                    hole_list.append(polygon)
+                else:
+                    raise Exception('Failed to process cycle containing edge.')
+            for edge in cycle_list:
+                i = self.FindEdge(edge, False, False)
+                del self.edge_list[i]
+        
+        # Finally, merry all the holes to the appropriate perimeters.
+        from math2d_region import Region, SubRegion
+        region = Region()
+        for perimeter in perimeter_list:
+            sub_region = SubRegion(perimeter)
+            new_hole_list = []
+            for hole in hole_list:
+                # I believe we need only test a single point on the hole.
+                if perimeter.ContainsPoint(hole.vertex_list[0]) and not perimeter.ContainsPointOnBorder(hole.vertex_list[0]):
+                    sub_region.hole_list.append(hole)
+                else:
+                    new_hole_list.append(hole)
+            hole_list = new_hole_list
+            region.sub_region_list.append(sub_region)
+        if len(hole_list) > 0:
+            raise Exception('Failed to marry %d holes to perimeters.' % len(hole_list))
+        
+        return region
+
+    def FindCycleContainingEdge(self, given_edge, wind_ccw=True):
+        cycle_list = [given_edge]
+        while cycle_list[len(cycle_list) - 1][1] != cycle_list[0][0]:
+            edge = cycle_list[len(cycle_list) - 1]
+            adjacency_list = self.FindAllAdjacencies(edge[1])
+            cur_heading = self.EdgeVector(edge)
+            j = -1
+            if wind_ccw:
+                largest_angle = 0.0
+                for i in range(len(adjacency_list)):
+                    adj_edge = adjacency_list[i]
+                    new_heading = self.EdgeVector(adj_edge)
+                    angle = cur_heading.SignedAngleBetween(new_heading)
+                    if angle > largest_angle:
+                        j = i
+            else:
+                smallest_angle = 3.0 * math.pi
+                for i in range(len(adjacency_list)):
+                    new_heading = self.EdgeVector(adj_edge)
+                    angle = cur_heading.SignedAngleBetween(new_heading)
+                    if angle < smallest_angle:
+                        j = i
+            cycle_list.append(self.adjacency_list[j])
+        return cycle_list
+    
+    def EdgeVector(self, edge):
+        return self.vertex_list[edge[1]] - self.vertex_list[edge[0]]
+    
+    def FindAllAdjacencies(self, i, ignore_direction=False):
+        adjacency_list = []
+        for edge in self.edge_list:
+            if edge[0] == i:
+                adjacency_list.append(edge)
+            elif ignore_direction and edge[1] == i:
+                adjacency_list.append(edge)
+        return adjacency_list
 
     def Render(self, color_func=None):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, glColor3f, glPointSize, GL_LINES, GL_POINTS
