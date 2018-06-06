@@ -5,6 +5,17 @@ import copy
 from math2d_polygon import Polygon
 from math2d_line_segment import LineSegment
 
+# Thought: If you were to use regions to make a 2D twisty puzzle game, the speed
+#          of the cutting algorithm may not be a concern, because you can pre-cut
+#          the puzzle instead of cutting it as you go.  For each shape, perform
+#          its cut, then for each non-identity symmetry of that shape, perform
+#          every other shape's cut.  If this is still too intensive, it could be
+#          done as a content build step for the puzzle program.  During play, we
+#          need only be able to capture sub-regions using a shape, and then apply
+#          that shape's symmetry to the captured sub-regions.  If all of that is
+#          done in JS, then we could make this a web-app.  Tessellations could be
+#          part of the build step to make the JS calculations and rendering easier.
+
 class Region(object):
     # These are simply collections of sub-regions.  The sub-regions are assumed
     # to be pair-wise disjoint from one another.  If this requirement is not
