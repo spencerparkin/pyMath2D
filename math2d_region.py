@@ -5,26 +5,6 @@ import copy
 from math2d_polygon import Polygon
 from math2d_line_segment import LineSegment
 
-# Thought: If you were to use regions to make a 2D twisty puzzle game, the speed
-#          of the cutting algorithm may not be a concern, because you can pre-cut
-#          the puzzle instead of cutting it as you go.  For each shape, perform
-#          its cut, then for each non-identity symmetry of that shape, perform
-#          every other shape's cut.  If this is still too intensive, it could be
-#          done as a content build step for the puzzle program.  During play, we
-#          need only be able to capture sub-regions using a shape, and then apply
-#          that shape's symmetry to the captured sub-regions.  If all of that is
-#          done in JS, then we could make this a web-app.  Tessellations could be
-#          part of the build step to make the JS calculations and rendering easier.
-#          The game, JS-side, does nothing more than move vertices of a mesh.  The
-#          UV-coords associated with each vertex don't change.  If keep track of
-#          changing transforms instead of changing vertex locations, we can know if
-#          the puzzle is solved if all transforms are identity.  A level file would
-#          be a giant JSON blob containing: 1) all tessellated sub-regions (which
-#          would be given associated identity transforms to start with), 2) all polygon
-#          shapes with their tessellations too, and 3) the desired symmetries of all
-#          the shapes, and 4) maybe some some hot-spot data for more easily interfacing
-#          with the puzzle using the mouse.
-
 class Region(object):
     # These are simply collections of sub-regions.  The sub-regions are assumed
     # to be pair-wise disjoint from one another.  If this requirement is not
