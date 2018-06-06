@@ -15,6 +15,10 @@ from math2d_line_segment import LineSegment
 #          that shape's symmetry to the captured sub-regions.  If all of that is
 #          done in JS, then we could make this a web-app.  Tessellations could be
 #          part of the build step to make the JS calculations and rendering easier.
+#          The game, JS-side, does nothing more than move vertices of a mesh.  The
+#          UV-coords associated with each vertex don't change.  If keep track of
+#          changing transforms instead of changing vertex locations, we can know if
+#          the puzzle is solved if all transforms are identity.
 
 class Region(object):
     # These are simply collections of sub-regions.  The sub-regions are assumed
