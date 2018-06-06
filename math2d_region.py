@@ -18,7 +18,12 @@ from math2d_line_segment import LineSegment
 #          The game, JS-side, does nothing more than move vertices of a mesh.  The
 #          UV-coords associated with each vertex don't change.  If keep track of
 #          changing transforms instead of changing vertex locations, we can know if
-#          the puzzle is solved if all transforms are identity.
+#          the puzzle is solved if all transforms are identity.  A level file would
+#          be a giant JSON blob containing: 1) all tessellated sub-regions (which
+#          would be given associated identity transforms to start with), 2) all polygon
+#          shapes with their tessellations too, and 3) the desired symmetries of all
+#          the shapes, and 4) maybe some some hot-spot data for more easily interfacing
+#          with the puzzle using the mouse.
 
 class Region(object):
     # These are simply collections of sub-regions.  The sub-regions are assumed
