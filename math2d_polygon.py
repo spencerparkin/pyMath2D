@@ -23,7 +23,10 @@ class Polygon(object):
         from math2d_tri_mesh import TriangleMesh
         self.mesh = TriangleMesh()
         polygon = self.Copy()
-        while len(polygon.vertex_list) > 2:
+        while True:
+            polygon.RemoveRedundantVertices()
+            if len(polygon.vertex_list) < 3:
+                break
             found = False
             for i in range(len(polygon.vertex_list)):
                 j = (i + 1) % len(polygon.vertex_list)
@@ -52,8 +55,20 @@ class Polygon(object):
         pass # TODO: Can we find an edge who's line is straddled by the polygon?
     
     def RemoveRedundantVertices(self):
-        # A vertex is redundant if it is on what could be an edge of the polygon.
-        pass
+        if len(self.vertex_list) >= 3:
+            while True:
+                found = None
+                for j in range(len(self.vertex_list)):
+                    i = (j - 1) % len(self.vertex_list)
+                    k = (j + 1) % len(self.vertex_list)
+                    line_segment = LineSegment(self.vertex_list[i], self.vertex_list[k])
+                    if line_segment.ContainsPoint(self.vertex_list[j]):
+                        found = j
+                        break
+                if found is None:
+                    break
+                else:
+                    del self.vertex_list[found]
     
     def Area(self):
         return self.mesh.Area()
@@ -86,7 +101,7 @@ class Polygon(object):
             j = (i + 1) % len(self.vertex_list)
             k = (i + 2) % len(self.vertex_list)
             vector_a = self.vertex_list[j] - self.vertex_list[i]
-            vector_b = self.vertex_list[k] - self.vertex_list[k]
+            vector_b = self.vertex_list[k] - self.vertex_list[j]
             net_angle += vector_a.SignedAngleBetween(vector_b)
         if math.fabs(net_angle - 2.0 * math.pi) < epsilon:
             return True

@@ -1,6 +1,7 @@
 # math2d_test.py
 
 import sys
+import random
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -8,17 +9,28 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 from math2d_vector import Vector
 from math2d_polygon import Polygon
 from math2d_region import Region, SubRegion
+from math2d_planar_graph import PlanarGraph, PlanarGraphEdgeLabel
 
-class Window(QtGui.QOpenGLWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        
+class TestCase(object):
+    def __init__(self):
+        pass
+    
+    def Render(self):
+        pass
+    
+    def Click(self):
+        pass
+
+class TestCaseA(TestCase):
+    def __init__(self):
+        super().__init__()
+
         sub_region = SubRegion()
         sub_region.polygon.vertex_list.append(Vector(-5.0, -4.0))
         sub_region.polygon.vertex_list.append(Vector(4.0, -4.0))
         sub_region.polygon.vertex_list.append(Vector(4.0, 3.0))
         sub_region.polygon.vertex_list.append(Vector(-5.0, 3.0))
-        
+
         hole = Polygon()
         hole.vertex_list.append(Vector(-4.0, -3.0))
         hole.vertex_list.append(Vector(3.0, -3.0))
@@ -29,14 +41,14 @@ class Window(QtGui.QOpenGLWindow):
         hole.vertex_list.append(Vector(3.0, 2.0))
         hole.vertex_list.append(Vector(-4.0, 2.0))
         sub_region.hole_list.append(hole)
-        
+
         hole = Polygon()
         hole.vertex_list.append(Vector(-2.0, -1.0))
         hole.vertex_list.append(Vector(0.0, -1.0))
         hole.vertex_list.append(Vector(0.0, 0.0))
         hole.vertex_list.append(Vector(-2.0, 0.0))
         sub_region.hole_list.append(hole)
-        
+
         hole = Polygon()
         hole.vertex_list.append(Vector(1.0, -1.0))
         hole.vertex_list.append(Vector(3.0, -1.0))
@@ -48,7 +60,7 @@ class Window(QtGui.QOpenGLWindow):
         self.region.sub_region_list.append(sub_region)
 
         self.cut_region = Region()
-        
+
         sub_region = SubRegion()
         sub_region.polygon.vertex_list.append(Vector(-1.0, -5.0))
         sub_region.polygon.vertex_list.append(Vector(5.0, -5.0))
@@ -70,7 +82,39 @@ class Window(QtGui.QOpenGLWindow):
         sub_region.polygon.vertex_list.append(Vector(-6.0, -3.0))
         self.cut_region.sub_region_list.append(sub_region)
         
-        self.test_polygon = None
+        sub_region = SubRegion()
+        sub_region.polygon.vertex_list.append(Vector(0.5, 0.5))
+        sub_region.polygon.vertex_list.append(Vector(0.5, -1.5))
+        sub_region.polygon.vertex_list.append(Vector(3.5, -1.5))
+        sub_region.polygon.vertex_list.append(Vector(3.5, 0.5))
+        self.cut_region.sub_region_list.append(sub_region)
+    
+        self.result_region = None
+        self.polygon_list = []
+
+    def Render(self):
+        if self.result_region is None:
+            glColor3f(1.0, 1.0, 1.0)
+            self.region.Render()
+            glColor3f(1.0, 0.0, 0.0)
+            self.cut_region.Render()
+        else:
+            glColor3f(0.0, 1.0, 0.0)
+            self.result_region.Render()
+
+            for polygon in self.polygon_list:
+                glColor3f(random.uniform(0.0, 1.0), random.uniform(0.0, 1.0), random.uniform(0.0, 1.0))
+                polygon.mesh.Render()
+
+    def Click(self):
+        self.result_region = self.region.CutAgainst(self.cut_region)
+        self.polygon_list = self.result_region.TessellatePolygons()
+
+class Window(QtGui.QOpenGLWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
+        self.test_case = TestCaseA()
     
     def initializeGL(self):
         glShadeModel(GL_FLAT)
@@ -97,14 +141,7 @@ class Window(QtGui.QOpenGLWindow):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         
-        glColor3f(1.0, 1.0, 1.0)
-        self.region.Render()
-        
-        glColor3f(1.0, 0.0, 0.0)
-        self.cut_region.Render()
-        
-        if self.test_polygon is not None:
-            self.test_polygon.mesh.Render()
+        self.test_case.Render()
         
         glFlush()
 
@@ -114,10 +151,14 @@ class Window(QtGui.QOpenGLWindow):
     def mousePressEvent(self, event):
         button = event.button()
         if button == QtCore.Qt.LeftButton:
-            pass
-            # TODO: The first thing to test is just creating a graph that merges the region and cut-region together.
+            self.test_case.Click()
+            self.update()
+
+def ExceptionHook(cls, exc, tb):
+    sys.__excepthook__(cls, exc, tb)
 
 if __name__ == '__main__':
+    sys.excepthook = ExceptionHook
     
     app = QtGui.QGuiApplication(sys.argv)
     

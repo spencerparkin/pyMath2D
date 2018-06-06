@@ -12,7 +12,7 @@ class AxisAlignedRectangle(object):
 
     def Clone(self):
         return copy.deepcopy(self)
-
+    
     def CalcUVs(self, point):
         u = (point.x - self.min_point.x) / (self.max_point.x - self.min_point.x)
         v = (point.y - self.min_point.y) / (self.max_point.y - self.min_point.y)
@@ -86,7 +86,7 @@ class AxisAlignedRectangle(object):
         self.max_point = center + max_vector
         self.min_point = center + min_vector
 
-    def Polygon(self):
+    def GeneratePolygon(self):
         from math2d_polygon import Polygon
         polygon = Polygon()
         polygon.vertex_list.append(Vector(self.min_vector.x, self.min_vector.y))

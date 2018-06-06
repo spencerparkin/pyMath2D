@@ -15,5 +15,10 @@ class Ray(object):
     def CastAgainst(self, other):
         if isinstance(other, Circle):
             pass
-        if isinstance(other, LineSegment):
+        elif isinstance(other, LineSegment):
             pass
+        elif isinstance(other, Ray):
+            pass
+    
+    def Point(self, scale):
+        return self.point + self.normal * scale

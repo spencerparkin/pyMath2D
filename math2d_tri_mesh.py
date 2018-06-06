@@ -60,7 +60,7 @@ class TriangleMesh(object):
         )
         self.FindOrAddTriangleTriple(triple)
     
-    def GenerateTriStrip(self):
+    def GenerateTriStrip(self): # TODO: Test this.  I'm sure it needs fixes.
         triangle_sequence = []
         i = 0 # This is our current triangle.
         j = 0 # This indicates how we entered the current triangle.
@@ -120,14 +120,9 @@ class TriangleMesh(object):
         return None
     
     def Render(self, tri_strip_sequence=None):
-        from OpenGL.GL import glColor3f
         if tri_strip_sequence is None:
             for triple in self.triangle_list:
                 triangle = self.MakeTriangleFromTriple(triple)
-                r = random.random()
-                g = random.random()
-                b = random.random()
-                glColor3f(r, g, b)
                 triangle.Render()
         else:
             from OpenGL.GL import glBegin, glEnd, glVertex2f, GL_TRIANGLE_STRIP

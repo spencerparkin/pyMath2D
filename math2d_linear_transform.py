@@ -16,14 +16,26 @@ class LinearTransform(object):
         self.x_axis = Vector(1.0, 0.0)
         self.y_axis = Vector(0.0, 1.0)
     
-    def Transform(self, vector):
-        return self.x_axis * vector.x + self.y_axis * vector.y
+    def Transform(self, object):
+        if isinstance(object, Vector):
+            return self.x_axis * object.x + self.y_axis * object.y
+    
+    def __call__(self, object):
+        return self.Transform(object)
     
     def Concatinate(self, other):
         x_axis = self.Transform(other.x_axis)
         y_axis = self.Transform(other.y_axis)
         self.x_axis = x_axis
         self.y_axis = y_axis
+    
+    def __mul__(self, other):
+        if isinstance(other, LinearTransform):
+            transform = other.Copy()
+            transform.Concatinate(self)
+            return transform
+        else:
+            return self.Transform(other)
     
     def Determinant(self):
         return self.x_axis.Cross(self.y_axis)
@@ -41,9 +53,14 @@ class LinearTransform(object):
             return False
     
     def Rotation(self, angle):
-        ca = math.cos(angle)
-        sa = math.sin(angle)
-        self.x_axis.x = ca
-        self.x_axis.y = sa
-        self.y_axis.x = -sa
-        self.y_axis.y = ca
+        self.Identity()
+        self.x_axis = self.x_axis.Rotated(angle)
+        self.y_axis = self.y_axis.Rotated(angle)
+    
+    def Reflection(self, vector):
+        self.Identity()
+        self.x_axis = self.x_axis.Reflected(vector)
+        self.y_axis = self.y_axis.Reflected(vector)
+    
+    def Decompose(self):
+        pass
