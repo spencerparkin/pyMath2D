@@ -29,12 +29,27 @@ class Region(object):
         polygon_list = [sub_region.TessellatePolygon() for sub_region in self.sub_region_list]
         return polygon_list
     
+    def GenerateMesh(self):
+        from math2d_tri_mesh import TriangleMesh
+        polygon_list = self.TessellatePolygons()
+        mesh = TriangleMesh()
+        for polygon in polygon_list:
+            for triangle in polygon.mesh.GenerateTriangles():
+                mesh.AddTriangle(triangle)
+        return mesh
+    
     def ContainsPoint(self, point, epsilon=1e-7):
         for sub_region in self.sub_region_list:
             if sub_region.ContainsPoint(point, epsilon):
                 return True
         return False
-    
+
+    def ContainsPointOnBorder(self, point, epsilon=1e-7):
+        for sub_region in self.sub_region_list:
+            if sub_region.ContainsPointOnBorder(point, epsilon):
+                return True
+        return False
+        
     def CutAgainst(self, other):
         from math2d_planar_graph import PlanarGraph, PlanarGraphEdgeLabel
         graph = PlanarGraph()
@@ -151,6 +166,14 @@ class SubRegion(object):
             if hole.ContainsPoint(point, epsilon):
                 return False
         return True
+    
+    def ContainsPointOnBorder(self, point, epsilon=1e-7):
+        if self.polygon.ContainsPointOnBorder(point, epsilon):
+            return True
+        for hole in self.hole_list:
+            if hole.ContainsPointOnBorder(point, epsilon):
+                return True
+        return False
     
     def Render(self):
         self.polygon.Render()

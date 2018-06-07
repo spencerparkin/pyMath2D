@@ -66,16 +66,27 @@ class AxisAlignedRectangle(object):
     def Center(self):
         return LineSegment(self.min_point, self.max_point).Lerp(0.5)
 
-    def GrowForPoint(self, point):
-        # Minimally grow the rectangle to include the given point.
-        if self.min_point.x > point.x:
-            self.min_point.x = point.x
-        if self.max_point.x < point.x:
-            self.max_point.x = point.x
-        if self.min_point.y > point.y:
-            self.min_point.y = point.y
-        if self.max_point.y < point.y:
-            self.max_point.y = point.y
+    def GrowFor(self, object):
+        from math2d_polygon import Polygon
+        from math2d_region import Region, SubRegion
+        if isinstance(object, Vector):
+            # Minimally grow the rectangle to include the given point.
+            if self.min_point.x > object.x:
+                self.min_point.x = object.x
+            if self.max_point.x < object.x:
+                self.max_point.x = object.x
+            if self.min_point.y > object.y:
+                self.min_point.y = object.y
+            if self.max_point.y < object.y:
+                self.max_point.y = object.y
+        elif isinstance(object, Polygon):
+            for vertex in object.vertex_list:
+                self.GrowFor(vertex)
+        elif isinstance(object, Region):
+            for sub_region in object.sub_region_list:
+                self.GrowFor(sub_region)
+        elif isinstance(object, SubRegion):
+            self.GrowFor(object, object.polygon)
 
     def Scale(self, scale_factor):
         center = self.Center()

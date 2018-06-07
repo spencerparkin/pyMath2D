@@ -63,6 +63,10 @@ class TriangleMesh(object):
             self.triangle_list.append(given_triple)
             return len(self.triangle_list) - 1
     
+    def GenerateTriangles(self):
+        for triple in self.triangle_list:
+            yield self.MakeTriangleFromTriple(triple)
+    
     def AddTriangle(self, triangle):
         triangle.FixWindingIfNecessary()
         triple = (
