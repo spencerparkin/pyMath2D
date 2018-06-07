@@ -15,6 +15,12 @@ class Region(object):
     def Copy(self):
         return copy.deepcopy(self)
 
+    def Serialize(self):
+        pass
+    
+    def Deserialize(self, json_data):
+        pass
+
     def Tessellate(self):
         for sub_region in self.sub_region_list:
             sub_region.Tessellate()
@@ -51,6 +57,12 @@ class SubRegion(object):
     
     def Copy(self):
         return copy.deepcopy(self)
+
+    def Serialize(self):
+        pass
+
+    def Deserialize(self, json_data):
+        pass
 
     def GeneratePolygon(self):
         # Return a polygon covering the same area as this sub-region.

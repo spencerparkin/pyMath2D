@@ -18,6 +18,17 @@ class Polygon(object):
     def Copy(self):
         return copy.deepcopy(self)
     
+    def Serialize(self):
+        pass
+
+    def Deserialize(self, json_data):
+        pass
+    
+    def MakeRegularPolygon(self, sides, radius=1.0):
+        for i in range(sides):
+            point = Vector(angle=2.0 * math.pi * float(i) / float(sides), radius=radius)
+            self.vertex_list.append(point)
+    
     def Tessellate(self):
         # Note that it is up to the caller to know when and if we need to recalculate this mesh, which some methods depend upon.
         from math2d_tri_mesh import TriangleMesh
@@ -117,6 +128,21 @@ class Polygon(object):
             j = (i + 1) % len(self.vertex_list)
             line_segment = LineSegment(self.vertex_list[i], self.vertex_list[j])
             yield line_segment
+    
+    def IsSymmetry(self, transform):
+        polygon = transform * self
+        for vertex in self.vertex_list:
+            i = polygon.FindVertex(vertex)
+            if i is None:
+                return False
+            del polygon.vertex_list[i]
+        return True
+    
+    def FindVertex(self, given_vertex, epsilon=1e-7):
+        for i, vertex in enumerate(self.vertex_list):
+            if vertex.IsPoint(given_vertex, epsilon):
+                return i
+        return None
     
     def Render(self):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, GL_LINE_LOOP

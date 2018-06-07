@@ -12,6 +12,18 @@ class AffineTransform(object):
     def Copy(self):
         return AffineTransform(self.linear_transform.x_axis.Copy(), self.linear_transform.y_axis.Copy(), self.translation.Copy())
     
+    def Serialize(self):
+        json_data = {
+            'linear_transform': self.linear_transform.Serialize(),
+            'translation': self.translation.Serialize()
+        }
+        return json_data
+
+    def Deserialize(self, json_data):
+        self.linear_transform = LinearTransform().Deserialize(json_data['linear_transform'])
+        self.translation = Vector().Deserialize(json_data['translation'])
+        return self
+    
     def Identity(self):
         self.linear_transform.Identity()
         self.translation = Vector(0.0, 0.0)
@@ -27,6 +39,7 @@ class AffineTransform(object):
         self.linear_transform.Concatinate(other)
     
     def __mul__(self, other):
+        from math2d_polygon import Polygon
         if isinstance(other, AffineTransform):
             transform = other.Copy()
             transform.Concatinate(self)
@@ -35,6 +48,11 @@ class AffineTransform(object):
             return self.Transform(other)
         elif isinstance(other, LineSegment):
             return LineSegment(self * other.point_a, self * other.point_b)
+        elif isinstance(other, Polygon):
+            polygon = Polygon()
+            for vertex in other.vertex_list:
+                polygon.vertex_list.append(self.Transform(vertex))
+            return polygon
     
     def Determinant(self):
         return self.linear_transform.Determinant()

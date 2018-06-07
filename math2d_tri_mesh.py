@@ -3,6 +3,7 @@
 import copy
 import random
 
+from math2d_vector import Vector
 from math2d_triangle import Triangle
 
 class TriangleMesh(object):
@@ -14,6 +15,17 @@ class TriangleMesh(object):
     
     def Copy(self):
         return copy.deepcopy(self)
+    
+    def Serialize(self):
+        json_data = {
+            'vertex_list': [vertex.Serialize() for vertex in self.vertex_list],
+            'triangle_list': [triple for triple in self.triangle_list]
+        }
+        return json_data
+    
+    def Deserialize(self, json_data):
+        self.vertex_list = [Vector().Deserialize(vertex) for vertex in json_data['vertex_list']]
+        self.triangle_list = [(triple[0], triple[1], triple[2]) for triple in json_data['triangle_list']]
     
     def MakeTriangleFromTriple(self, triple):
         vertex_a = self.vertex_list[triple[0]]

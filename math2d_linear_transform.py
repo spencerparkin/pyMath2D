@@ -12,6 +12,18 @@ class LinearTransform(object):
     def Copy(self):
         return LinearTransform(self.x_axis.Copy(), self.y_axis.Copy())
     
+    def Serialize(self):
+        json_data = {
+            'x_axis': self.x_axis.Serialize(),
+            'y_axis': self.y_axis.Serialize()
+        }
+        return json_data
+
+    def Deserialize(self, json_data):
+        self.x_axis = Vector().Deserialize(json_data['x_axis'])
+        self.y_axis = Vector().Deserialize(json_data['y_axis'])
+        return self
+    
     def Identity(self):
         self.x_axis = Vector(1.0, 0.0)
         self.y_axis = Vector(0.0, 1.0)

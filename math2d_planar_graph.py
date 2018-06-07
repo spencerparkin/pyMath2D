@@ -23,6 +23,12 @@ class PlanarGraph(object):
     
     def Copy(self):
         return copy.deepcopy(self)
+
+    def Serialize(self):
+        pass
+
+    def Deserialize(self, json_data):
+        pass
     
     def FindVertex(self, point, add_if_not_found=False, epsilon=1e-7):
         for i, vertex in enumerate(self.vertex_list):

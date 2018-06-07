@@ -14,6 +14,18 @@ class Vector(object):
             self.x = x
             self.y = y
     
+    def Serialize(self):
+        json_data = {
+            'x': self.x,
+            'y': self.y
+        }
+        return json_data
+
+    def Deserialize(self, json_data):
+        self.x = json_data['x']
+        self.y = json_data['y']
+        return self
+    
     def __add__(self, other):
         return Vector(self.x + other.x, self.y + other.y)
     
