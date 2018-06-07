@@ -99,7 +99,15 @@ class Vector(object):
         normal_vector_a.Normalize()
         normal_vector_b = vector.Copy()
         normal_vector_b.Normalize()
-        angle = math.acos(normal_vector_a.Dot(normal_vector_b))
+        dot = normal_vector_a.Dot(normal_vector_b)
+        try:
+            angle = math.acos(dot)
+        except ValueError:
+            if dot < -1.0:
+                dot = -1.0
+            elif dot > 1.0:
+                dot = 1.0
+            angle = math.acos(dot)
         return angle
 
     def SignedAngleBetween(self, vector):

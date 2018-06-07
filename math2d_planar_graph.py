@@ -193,21 +193,25 @@ class PlanarGraph(object):
             cur_heading = self.EdgeVector(edge)
             j = -1
             if wind_ccw:
-                largest_angle = 0.0
+                largest_angle = -3.0 * math.pi
                 for i in range(len(adjacency_list)):
                     adj_edge = adjacency_list[i]
-                    new_heading = self.EdgeVector(adj_edge)
-                    angle = cur_heading.SignedAngleBetween(new_heading)
-                    if angle > largest_angle and math.fabs(math.fabs(angle) - math.pi) > epsilon:
-                        j = i
+                    if adj_edge[1] != edge[0]:
+                        new_heading = self.EdgeVector(adj_edge)
+                        angle = cur_heading.SignedAngleBetween(new_heading)
+                        if angle > largest_angle:
+                            j = i
+                            largest_angle = angle
             else:
                 smallest_angle = 3.0 * math.pi
                 for i in range(len(adjacency_list)):
                     adj_edge = adjacency_list[i]
-                    new_heading = self.EdgeVector(adj_edge)
-                    angle = cur_heading.SignedAngleBetween(new_heading)
-                    if angle < smallest_angle and math.fabs(math.fabs(angle) - math.pi) > epsilon:
-                        j = i
+                    if adj_edge[1] != edge[0]:
+                        new_heading = self.EdgeVector(adj_edge)
+                        angle = cur_heading.SignedAngleBetween(new_heading)
+                        if angle < smallest_angle:
+                            j = i
+                            smallest_angle = angle
             if j == -1:
                 cycle_found = False
                 break
@@ -233,25 +237,31 @@ class PlanarGraph(object):
         # Find and return, as a list of polygons, the cycles of the
         # graph that do not encompass any other part of the graph.
         # Here we ignore the direction of the edges of the graph.
+        # If there is more than one connected component of the graph,
+        # then this may not produce a desirable result.
         graph = self.Copy()
         for edge in self.edge_list:
             reverse_edge = (edge[1], edge[0], edge[2])
-            i = graph.FindEdge(reverse_edge)
+            i = graph.FindEdge(reverse_edge, ignore_direction=False)
             if i is None:
                 graph.edge_list.append(reverse_edge)
         from math2d_polygon import Polygon
         polygon_list = []
         while len(graph.edge_list) > 0:
             edge = graph.edge_list[0]
-            cycle_list, cycle_found = self.FindCycleContainingEdge(edge, wind_ccw=True)
+            cycle_list, cycle_found = graph.FindCycleContainingEdge(edge, wind_ccw=True)
             if cycle_found:
                 polygon = Polygon()
-                polygon.vertex_list = [self.vertex_list[edge[0]] for edge in cycle_list]
-                polygon_list.append(polygon)
+                polygon.vertex_list = [graph.vertex_list[edge[0]] for edge in cycle_list]
+                if polygon.IsWoundCCW():
+                    polygon_list.append(polygon)
             for edge in cycle_list:
                 i = graph.FindEdge(edge, False, False)
                 del graph.edge_list[i]
         return polygon_list
+
+    def GenerateConnectedComponents(self):
+        pass # TODO: Return a list of sub-graphs, each a connected component of this graph.
 
     def Render(self):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, glColor3f, glPointSize, GL_POINTS

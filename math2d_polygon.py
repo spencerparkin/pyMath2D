@@ -65,15 +65,18 @@ class Polygon(object):
     def IsConcave(self):
         pass # TODO: Can we find an edge who's line is straddled by the polygon?
     
-    def RemoveRedundantVertices(self):
+    def RemoveRedundantVertices(self, epsilon=1e-7):
         if len(self.vertex_list) >= 3:
             while True:
                 found = None
                 for j in range(len(self.vertex_list)):
                     i = (j - 1) % len(self.vertex_list)
                     k = (j + 1) % len(self.vertex_list)
-                    line_segment = LineSegment(self.vertex_list[i], self.vertex_list[k])
-                    if line_segment.ContainsPoint(self.vertex_list[j]):
+                    vertex_a = self.vertex_list[i]
+                    vertex_b = self.vertex_list[j]
+                    vertex_c = self.vertex_list[k]
+                    triangle = Triangle(vertex_a, vertex_b, vertex_c)
+                    if math.fabs(triangle.Area()) <= epsilon:
                         found = j
                         break
                 if found is None:
