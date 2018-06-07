@@ -35,6 +35,9 @@ class Vector(object):
     def __mul__(self, other):
         return Vector(self.x * other, self.y * other)
     
+    def __div__(self, other):
+        return Vector(self.x / other, self.y / other)
+    
     def __neg__(self):
         return Vector(-self.x, -self.y)
     
@@ -76,13 +79,13 @@ class Vector(object):
         return self.x * other.y - self.y * other.x
     
     def Reflected(self, normal):
-        return self.Project(normal) - self.Reject(normal)
+        return self.Projected(normal) - self.Rejected(normal)
     
     def Projected(self, normal):
         return normal * self.Dot(normal)
     
     def Rejected(self, normal):
-        return self - self.Project(normal)
+        return self - self.Projected(normal)
     
     def Rotated(self, angle):
         result = self.Complex() * Vector(angle=angle).Complex()

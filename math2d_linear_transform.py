@@ -31,38 +31,40 @@ class LinearTransform(object):
     def Transform(self, object):
         if isinstance(object, Vector):
             return self.x_axis * object.x + self.y_axis * object.y
+        elif isinstance(object, LinearTransform):
+            transform = LinearTransform()
+            transform.x_axis = self.Transform(object.x_axis)
+            transform.y_axis = self.Transform(object.y_axis)
+            return transform
     
     def __call__(self, object):
         return self.Transform(object)
     
-    def Concatinate(self, other):
-        x_axis = self.Transform(other.x_axis)
-        y_axis = self.Transform(other.y_axis)
-        self.x_axis = x_axis
-        self.y_axis = y_axis
-    
     def __mul__(self, other):
-        if isinstance(other, LinearTransform):
-            transform = other.Copy()
-            transform.Concatinate(self)
-            return transform
-        else:
-            return self.Transform(other)
+        return self.Transform(other)
     
     def Determinant(self):
         return self.x_axis.Cross(self.y_axis)
     
     def Invert(self):
+        inverse = self.Inverted()
+        if inverse is None:
+            return False
+        else:
+            self.x_axis = inverse.x_axis
+            self.y_axis = inverse.y_axis
+            return True
+    
+    def Inverted(self):
         try:
             det = self.Determinant()
+            inverse = LinearTransform()
             scale = 1.0 / det
-            x_axis = Vector(self.y_axis.y, -self.x_axis.x) * scale
-            y_axis = Vector(-self.y_axis.x, self.x_axis.y) * scale
-            self.x_axis = x_axis
-            self.y_axis = y_axis
-            return True
+            inverse.x_axis = Vector(self.y_axis.y, -self.x_axis.y) * scale
+            inverse.y_axis = Vector(-self.y_axis.x, self.x_axis.x) * scale
+            return inverse
         except ZeroDivisionError:
-            return False
+            return None
     
     def Rotation(self, angle):
         self.Identity()

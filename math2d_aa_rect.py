@@ -86,7 +86,7 @@ class AxisAlignedRectangle(object):
             for sub_region in object.sub_region_list:
                 self.GrowFor(sub_region)
         elif isinstance(object, SubRegion):
-            self.GrowFor(object, object.polygon)
+            self.GrowFor(object.polygon)
 
     def Scale(self, scale_factor):
         center = self.Center()
@@ -100,8 +100,8 @@ class AxisAlignedRectangle(object):
     def GeneratePolygon(self):
         from math2d_polygon import Polygon
         polygon = Polygon()
-        polygon.vertex_list.append(Vector(self.min_vector.x, self.min_vector.y))
-        polygon.vertex_list.append(Vector(self.max_vector.x, self.min_vector.y))
-        polygon.vertex_list.append(Vector(self.max_vector.x, self.max_vector.y))
-        polygon.vertex_list.append(Vector(self.min_vector.x, self.max_vector.y))
+        polygon.vertex_list.append(Vector(self.min_point.x, self.min_point.y))
+        polygon.vertex_list.append(Vector(self.max_point.x, self.min_point.y))
+        polygon.vertex_list.append(Vector(self.max_point.x, self.max_point.y))
+        polygon.vertex_list.append(Vector(self.min_point.x, self.max_point.y))
         return polygon

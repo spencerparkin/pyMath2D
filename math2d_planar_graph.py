@@ -249,8 +249,8 @@ class PlanarGraph(object):
                 polygon.vertex_list = [self.vertex_list[edge[0]] for edge in cycle_list]
                 polygon_list.append(polygon)
             for edge in cycle_list:
-                i = self.FindEdge(edge, False, False)
-                del self.edge_list[i]
+                i = graph.FindEdge(edge, False, False)
+                del graph.edge_list[i]
         return polygon_list
 
     def Render(self):
