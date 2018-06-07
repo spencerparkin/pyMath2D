@@ -13,8 +13,10 @@ class PlanarGraphEdgeLabel:
 class PlanarGraph(object):
     # These are graphs in the plane where no two edges non-trivially overlap.
     # Edges are ordered pairs, but stored as triples, the third entry being a label.
-    # Consequently, the edges are directional, and certain algorithms depend on this.
+    # Consequently, the edges are directional, and certain algorithms depend on this, others don't.
     # If the graph is not truly planar, then the result of any algorithm here is left undefined.
+    # It should be noted here that we can't represent any planar graph with this class,
+    # because we are restricting ourselves to edges that are line-segments.
     def __init__(self):
         self.vertex_list = []
         self.edge_list = []
@@ -136,13 +138,13 @@ class PlanarGraph(object):
             else:
                 break
             polygon = Polygon()
-            cycle_list = self.FindCycleContainingEdge(edge, True)
+            cycle_list, cycle_found = self.FindCycleContainingEdge(edge, True)
             polygon.vertex_list = [self.vertex_list[edge[0]] for edge in cycle_list]
             if polygon.IsWoundCCW():
                 polygon.Tessellate()
                 perimeter_list.append(polygon)
             else:
-                cycle_list = self.FindCycleContainingEdge(edge, False)
+                cycle_list, cycle_found = self.FindCycleContainingEdge(edge, False)
                 polygon.vertex_list = [self.vertex_list[edge[0]] for edge in cycle_list]
                 if polygon.IsWoundCW():
                     polygon.ReverseWinding()
@@ -176,7 +178,9 @@ class PlanarGraph(object):
         return region
 
     def FindCycleContainingEdge(self, given_edge, wind_ccw=True, epsilon=1e-7):
+        # This algorithm depends on the direction of the edges in the graph.
         cycle_list = [given_edge]
+        cycle_found = True
         while cycle_list[len(cycle_list) - 1][1] != cycle_list[0][0]:
             edge = cycle_list[len(cycle_list) - 1]
             adjacency_list = self.FindAllAdjacencies(edge[1])
@@ -198,8 +202,11 @@ class PlanarGraph(object):
                     angle = cur_heading.SignedAngleBetween(new_heading)
                     if angle < smallest_angle and math.fabs(math.fabs(angle) - math.pi) > epsilon:
                         j = i
+            if j == -1:
+                cycle_found = False
+                break
             cycle_list.append(adjacency_list[j])
-        return cycle_list
+        return cycle_list, cycle_found
     
     def EdgeVector(self, edge):
         return self.vertex_list[edge[1]] - self.vertex_list[edge[0]]
@@ -215,6 +222,30 @@ class PlanarGraph(object):
             elif ignore_direction and edge[1] == i:
                 adjacency_list.append(edge)
         return adjacency_list
+
+    def GeneratePolygonCycles(self):
+        # Find and return, as a list of polygons, the cycles of the
+        # graph that do not encompass any other part of the graph.
+        # Here we ignore the direction of the edges of the graph.
+        graph = self.Copy()
+        for edge in self.edge_list:
+            reverse_edge = (edge[1], edge[0], edge[2])
+            i = graph.FindEdge(reverse_edge)
+            if i is None:
+                graph.edge_list.append(reverse_edge)
+        from math2d_polygon import Polygon
+        polygon_list = []
+        while len(graph.edge_list) > 0:
+            edge = graph.edge_list[0]
+            cycle_list, cycle_found = self.FindCycleContainingEdge(edge, wind_ccw=True)
+            if cycle_found:
+                polygon = Polygon()
+                polygon.vertex_list = [self.vertex_list[edge[0]] for edge in cycle_list]
+                polygon_list.append(polygon)
+            for edge in cycle_list:
+                i = self.FindEdge(edge, False, False)
+                del self.edge_list[i]
+        return polygon_list
 
     def Render(self):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, glColor3f, glPointSize, GL_POINTS
