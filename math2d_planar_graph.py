@@ -50,6 +50,10 @@ class PlanarGraph(object):
                 return i
         return None
     
+    def GenerateEdgeSegments(self):
+        for edge in self.edge_list:
+            yield self.EdgeSegment(edge)
+    
     def Add(self, other, disposition={}):
         from math2d_region import Region, SubRegion
         from math2d_polygon import Polygon

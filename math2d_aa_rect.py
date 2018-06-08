@@ -81,6 +81,7 @@ class AxisAlignedRectangle(object):
     def GrowFor(self, object):
         from math2d_polygon import Polygon
         from math2d_region import Region, SubRegion
+        from math2d_planar_graph import PlanarGraph
         if isinstance(object, Vector):
             # Minimally grow the rectangle to include the given point.
             if self.min_point.x > object.x:
@@ -99,6 +100,12 @@ class AxisAlignedRectangle(object):
                 self.GrowFor(sub_region)
         elif isinstance(object, SubRegion):
             self.GrowFor(object.polygon)
+        elif isinstance(object, PlanarGraph):
+            for edge_segment in object.GenerateEdgeSegments():
+                self.GrowFor(edge_segment)
+        elif isinstance(object, LineSegment):
+            self.GrowFor(object.point_a)
+            self.GrowFor(object.point_b)
 
     def Scale(self, scale_factor):
         center = self.Center()
