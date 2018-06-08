@@ -18,8 +18,8 @@ class PlanarGraph(object):
     # It should be noted here that we can't represent any planar graph with this class,
     # because we are restricting ourselves to edges that are line-segments.
     def __init__(self):
-        self.vertex_list = []
-        self.edge_list = []
+        self.vertex_list = [] # For large graphs, points in a BSP tree would have been more efficient.
+        self.edge_list = [] # Probably should have used a set for faster look-up times.
     
     def Copy(self):
         return copy.deepcopy(self)
@@ -265,7 +265,33 @@ class PlanarGraph(object):
         return polygon_list
 
     def GenerateConnectedComponents(self):
-        pass # TODO: Return a list of sub-graphs, each a connected component of this graph.
+        from math2d_dsf import DisjointSet
+        sub_graph_list = []
+        dsf_set_list = [DisjointSet(i) for i in range(len(self.vertex_list))]
+        visited_vertex_set = set()
+        added_edges_set = set()
+        while len(visited_vertex_set) < len(self.vertex_list):
+            for i in range(len(self.vertex_list)):
+                if i not in visited_vertex_set:
+                    break
+            else:
+                break
+            queue = {i}
+            sub_graph = PlanarGraph()
+            while len(queue) > 0:
+                i = queue.pop()
+                visited_vertex_set.add(i)
+                adj_edge_list = self.FindAllAdjacencies(i, ignore_direction=True)
+                for edge in adj_edge_list:
+                    dsf_set_list[edge[0]].MergeWith(dsf_set_list[edge[1]])
+                    for j in [edge[0], edge[1]]:
+                        if j not in visited_vertex_set and j not in queue:
+                            queue.add(j)
+                    if edge not in added_edges_set:
+                        sub_graph.Add(self.EdgeSegment(edge))
+                        added_edges_set.add(edge)
+            sub_graph_list.append(sub_graph)
+        return sub_graph_list, dsf_set_list
 
     def Render(self):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, glColor3f, glPointSize, GL_POINTS

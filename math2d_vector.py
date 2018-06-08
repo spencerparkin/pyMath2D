@@ -40,7 +40,10 @@ class Vector(object):
     
     def __neg__(self):
         return Vector(-self.x, -self.y)
-    
+
+    def __hash__(self):
+        return hash(str(self.x) + ',' + str(self.y))
+
     def Copy(self):
         return Vector(self.x, self.y)
     

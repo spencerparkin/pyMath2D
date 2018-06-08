@@ -50,4 +50,9 @@ class LineSegment(object):
             except ZeroDivisionError:
                 return None
             if -epsilon <= lerp_value_a <= 1.0 + epsilon and -epsilon <= lerp_value_b <= 1.0 + epsilon:
-                return self.Lerp(lerp_value_a)
+                point = self.Lerp(lerp_value_a)
+                # Let's scrutinize further.  Two disjoint and parallel line segments sometimes warrant this.
+                if self.ContainsPoint(point, epsilon) and other.ContainsPoint(point, epsilon):
+                    return point
+                else:
+                    return None
