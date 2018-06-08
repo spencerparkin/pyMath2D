@@ -33,31 +33,66 @@ class Polygon(object):
         # Note that it is up to the caller to know when and if we need to recalculate this mesh, which some methods depend upon.
         from math2d_tri_mesh import TriangleMesh
         self.mesh = TriangleMesh()
-        polygon = self.Copy()
-        while True:
-            polygon.RemoveRedundantVertices()
-            if len(polygon.vertex_list) < 3:
-                break
-            found = False
-            for i in range(len(polygon.vertex_list)):
-                j = (i + 1) % len(polygon.vertex_list)
-                k = (i + 2) % len(polygon.vertex_list)
-                vertex_a = polygon.vertex_list[i]
-                vertex_b = polygon.vertex_list[j]
-                vertex_c = polygon.vertex_list[k]
-                triangle = Triangle(vertex_a, vertex_b, vertex_c)
-                if triangle.Area() > 0.0:
-                    for vertex in self.vertex_list:
-                        if triangle.ContainsPoint(vertex) and not triangle.ContainsPointOnBorder(vertex):
+        self._Tessellate(self.mesh)
+    
+    def _Tessellate(self, given_mesh):
+        self.RemoveRedundantVertices()
+        if len(self.vertex_list) < 3:
+            return
+        elif len(self.vertex_list) == 3:
+            triangle = Triangle(self.vertex_list[0], self.vertex_list[1], self.vertex_list[2])
+            given_mesh.AddTriangle(triangle)
+        else:
+            candidate_list = []
+            for i in range(len(self.vertex_list)):
+                for j in range(i + 1, len(self.vertex_list)):
+                    if (i + 1) % len(self.vertex_list) != j and (i - 1) % len(self.vertex_list) != j:
+                        candidate_list.append((i, j))
+            # The idea here is that we might get better tessellations if we try the candidates in this order.
+            candidate_list.sort(key=lambda pair: (self.vertex_list[pair[1]] - self.vertex_list[pair[0]]).Length(), reverse=True)
+            for pair in candidate_list:
+                i = pair[0]
+                j = pair[1]
+                line_segment = LineSegment(self.vertex_list[i], self.vertex_list[j])
+                try:
+                    for k in range(len(self.vertex_list)):
+                        if k != i and k != j:
+                            if line_segment.ContainsPoint(self.vertex_list[k]):
+                                raise Exception()
+                        if k != i and (k + 1) % len(self.vertex_list) != i:
+                            if k != j and (k + 1) % len(self.vertex_list) != j:
+                                edge_segment = LineSegment(self.vertex_list[k], self.vertex_list[(k + 1) % len(self.vertex_list)])
+                                point = edge_segment.IntersectWith(line_segment)
+                                if point is not None:
+                                    raise Exception()
+                    polygon_a = Polygon()
+                    k = 0
+                    while True:
+                        r = (j + k) % len(self.vertex_list)
+                        polygon_a.vertex_list.append(self.vertex_list[r])
+                        if r == i:
                             break
-                    else:
-                        found = True
-                if found:
-                    self.mesh.AddTriangle(triangle)
-                    del polygon.vertex_list[j]
+                        k += 1
+                    if polygon_a.IsWoundCW():
+                        raise Exception()
+                    polygon_b = Polygon()
+                    k = 0
+                    while True:
+                        r = (i + k) % len(self.vertex_list)
+                        polygon_b.vertex_list.append(self.vertex_list[r])
+                        if r == j:
+                            break
+                        k += 1
+                    if polygon_b.IsWoundCW():
+                        raise Exception()
+                except:
+                    pass
+                else:
+                    polygon_a._Tessellate(given_mesh)
+                    polygon_b._Tessellate(given_mesh)
                     break
-            if not found:
-                raise Exception('Failed to tessellate polygon.')
+            else:
+                raise Exception('Failed to tessellate polygon!')
     
     def IsConvex(self):
         return not self.IsConcave()

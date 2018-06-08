@@ -24,10 +24,14 @@ class Triangle(object):
     def Vertex(self, i):
         return [self.vertex_a, self.vertex_b, self.vertex_c][i]
     
-    def ContainsPointOnBorder(self, point, epsilon=1e-7):
+    def GenerateEdgeSegments(self):
         for i in range(3):
             j = (i + 1) % 3
-            if LineSegment(self.Vertex(i), self.Vertex(j)).ContainsPoint(point, epsilon):
+            yield LineSegment(self.Vertex(i), self.Vertex(j))
+    
+    def ContainsPointOnBorder(self, point, epsilon=1e-7):
+        for edge_segment in self.GenerateEdgeSegments():
+            if edge_segment.ContainsPoint(point, epsilon):
                 return True
         return False
     
