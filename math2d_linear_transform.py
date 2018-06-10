@@ -75,6 +75,10 @@ class LinearTransform(object):
         self.Identity()
         self.x_axis = self.x_axis.Reflected(vector)
         self.y_axis = self.y_axis.Reflected(vector)
-    
+
+    def Scale(self, x_scale, y_scale):
+        self.x_axis = Vector(x_scale, 0.0)
+        self.y_axis = Vector(0.0, y_scale)
+
     def Decompose(self):
         pass
