@@ -191,7 +191,11 @@ class PlanarGraph(object):
         # This algorithm depends on the direction of the edges in the graph.
         cycle_list = [given_edge]
         cycle_found = True
-        while cycle_list[len(cycle_list) - 1][1] != cycle_list[0][0]:
+        while True:
+            if cycle_list[-1][1] == cycle_list[0][0]:
+                # Some cycles may need to be self-tangential.
+                if cycle_list[-1][0] != cycle_list[0][1]:
+                    break
             edge = cycle_list[len(cycle_list) - 1]
             adjacency_list = self.FindAllAdjacencies(edge[1])
             cur_heading = self.EdgeVector(edge)
