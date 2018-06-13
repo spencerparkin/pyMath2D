@@ -192,10 +192,6 @@ class PlanarGraph(object):
         cycle_list = [given_edge]
         cycle_found = True
         while True:
-            if cycle_list[-1][1] == cycle_list[0][0]:
-                # Some cycles may need to be self-tangential.
-                if cycle_list[-1][0] != cycle_list[0][1]:
-                    break
             edge = cycle_list[len(cycle_list) - 1]
             adjacency_list = self.FindAllAdjacencies(edge[1])
             cur_heading = self.EdgeVector(edge)
@@ -223,7 +219,10 @@ class PlanarGraph(object):
             if j == -1:
                 cycle_found = False
                 break
-            cycle_list.append(adjacency_list[j])
+            new_edge = adjacency_list[j]
+            if new_edge == given_edge:
+                break
+            cycle_list.append(new_edge)
         return cycle_list, cycle_found
     
     def EdgeVector(self, edge):
