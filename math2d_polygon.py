@@ -23,7 +23,14 @@ class Polygon(object):
 
     def Deserialize(self, json_data):
         pass
-    
+
+    def AverageVertex(self):
+        avg_vertex = Vector(0.0, 0.0)
+        for vertex in self.vertex_list:
+            avg_vertex += vertex
+        avg_vertex = avg_vertex / float(len(self.vertex_list))
+        return avg_vertex
+
     def MakeRegularPolygon(self, sides, radius=1.0):
         for i in range(sides):
             point = Vector(angle=2.0 * math.pi * float(i) / float(sides), radius=radius)
