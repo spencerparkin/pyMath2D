@@ -24,6 +24,13 @@ class AffineTransform(object):
         self.translation = Vector().Deserialize(json_data['translation'])
         return self
     
+    def IsTransform(self, transform, epsilon=1e-7):
+        if not self.linear_transform.IsTransform(transform.linear_transform, epsilon):
+            return False
+        if not self.translation.IsPoint(transform.translation, epsilon):
+            return False
+        return True
+    
     def Identity(self):
         self.linear_transform.Identity()
         self.translation = Vector(0.0, 0.0)
@@ -77,12 +84,22 @@ class AffineTransform(object):
         return inverse
     
     def Rotation(self, center, angle):
-        transform = AffineTransform(None, None, center) * AffineTransform().linear_transform.Rotation(angle) * AffineTransform(None, None, -center)
+        translation_a = AffineTransform(None, None, -center)
+        translation_b = AffineTransform(None, None, center)
+        rotation = AffineTransform()
+        rotation.linear_transform.Rotation(angle)
+        transform = translation_b * rotation * translation_a
         self.linear_tranfsorm = transform.linear_transform
         self.translation = transform.translation
     
     def Reflection(self, center, vector):
-        pass
+        translation_a = AffineTransform(None, None, -center)
+        translation_b = AffineTransform(None, None, center)
+        reflection = AffineTransform()
+        reflection.linear_transform.Reflection(vector)
+        transform = translation_b * reflection * translation_a
+        self.linear_transform = transform.linear_transform
+        self.translation = transform.translation
     
     def Translation(self, translation):
         self.linear_transform.Identity()

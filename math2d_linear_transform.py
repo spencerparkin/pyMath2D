@@ -24,6 +24,9 @@ class LinearTransform(object):
         self.y_axis = Vector().Deserialize(json_data['y_axis'])
         return self
     
+    def IsTransform(self, transform, epsilon=1e-7):
+        return self.x_axis.IsPoint(transform.x_axis, epsilon) and self.y_axis.IsPoint(transform.y_axis, epsilon)
+    
     def Identity(self):
         self.x_axis = Vector(1.0, 0.0)
         self.y_axis = Vector(0.0, 1.0)

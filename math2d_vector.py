@@ -93,6 +93,12 @@ class Vector(object):
     def Rotated(self, angle):
         result = self.Complex() * Vector(angle=angle).Complex()
         return Vector(result.real, result.imag)
+
+    def RotatedCCW90(self):
+        return Vector(-self.y, self.x)
+
+    def RotatedCW90(self):
+        return Vector(self.y, -self.x)
     
     def Complex(self):
         return complex(self.x, self.y)
