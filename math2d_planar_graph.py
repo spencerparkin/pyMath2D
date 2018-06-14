@@ -240,7 +240,7 @@ class PlanarGraph(object):
                 adjacency_list.append(edge)
         return adjacency_list
 
-    def GeneratePolygonCycles(self):
+    def GeneratePolygonCycles(self, epsilon=1e-7):
         # Find and return, as a list of polygons, the cycles of the
         # graph that do not encompass any other part of the graph.
         # Here we ignore the direction of the edges of the graph.
@@ -260,7 +260,7 @@ class PlanarGraph(object):
             if cycle_found:
                 polygon = Polygon()
                 polygon.vertex_list = [graph.vertex_list[edge[0]] for edge in cycle_list]
-                if polygon.IsWoundCCW():
+                if polygon.IsWoundCCW(epsilon):
                     polygon_list.append(polygon)
             for edge in cycle_list:
                 i = graph.FindEdge(edge, False, False)
