@@ -72,8 +72,9 @@ class PointCloud(object):
                 if is_symmetry:
                     new_entry = {'reflection': reflection, 'total_error': total_error, 'center': mid_point, 'normal': normal}
                     for k, entry in enumerate(reflection_list):
-                        if entry['reflection'].IsTransform(reflection) and entry['total_error'] > total_error:
-                            reflection_list[k] = new_entry
+                        if entry['reflection'].IsTransform(reflection):
+                            if entry['total_error'] > total_error:
+                                reflection_list[k] = new_entry
                             break
                     else:
                         reflection_list.append(new_entry)
