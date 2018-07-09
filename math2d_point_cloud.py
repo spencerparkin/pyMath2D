@@ -32,6 +32,7 @@ class PointCloud(object):
     def Add(self, other, epsilon=1e-7):
         from math2d_polygon import Polygon
         from math2d_region import Region, SubRegion
+        from math2d_planar_graph import PlanarGraph
         if isinstance(other, Polygon):
             for vertex in other.vertex_list:
                 self.Add(vertex)
@@ -46,6 +47,9 @@ class PointCloud(object):
             i = self.FindPoint(other, epsilon)
             if i is None:
                 self.point_list.append(other)
+        elif isinstance(other, PlanarGraph):
+            for vertex in other.vertex_list:
+                self.Add(vertex)
     
     def FindPoint(self, given_point, epsilon=1e-7):
         # For large point-clouds, a linear search here may be impractical, and something like a BSP tree would be helpful.
