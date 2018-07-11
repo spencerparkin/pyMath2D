@@ -64,14 +64,9 @@ class PointCloud(object):
         # TODO: Write this.
     
     def GenerateSymmetries(self):
-
-        # TODO: Some shapes have rotational symmetry, but not reflective symmetry.
-        #       How do we find the rotational symmetry in that case?
-        #       Okay, here's an idea.  Proceed to perform double-reflections of the shape
-        #       based on 2 pairs of points from the shape.  We can reduce the search space
-        #       by only considering pairs of points that are opposite about the center of the shape.
-
         reflection_list = []
+        center_reflection_list = []
+        center = self.AveragePoint()
         for i in range(len(self.point_list)):
             for j in range(i + 1, len(self.point_list)):
                 line_segment = LineSegment(self.point_list[i], self.point_list[j])
@@ -79,6 +74,9 @@ class PointCloud(object):
                 normal = line_segment.Direction().Normalized().RotatedCCW90()
                 reflection = AffineTransform()
                 reflection.Reflection(mid_point, normal)
+                center_reflected = reflection.Transform(center)
+                if center_reflected.IsPoint(center):
+                    center_reflection_list.append({'reflection': reflection, 'normal': normal})
                 is_symmetry, total_error = self.IsSymmetry(reflection)
                 if is_symmetry:
                     new_entry = {'reflection': reflection, 'total_error': total_error, 'center': mid_point, 'normal': normal}
@@ -93,14 +91,14 @@ class PointCloud(object):
         # Rotations are just double-reflections.  We return here a CCW rotational symmetry that generates
         # the sub-group of rotational symmetries of the overall group of symmetries of the cloud.  We also
         # return its inverse for convenience.  Of course, not all point clouds have any rotational symmetry.
+        def SortKey(entry):
+            angle = entry['normal'].SignedAngleBetween(Vector(1.0, 0.0))
+            if angle < 0.0:
+                angle += 2.0 * math.pi
+            return angle
         ccw_rotation = None
         cw_rotation = None
         if len(reflection_list) >= 2:
-            def SortKey(entry):
-                angle = entry['normal'].SignedAngleBetween(Vector(1.0, 0.0))
-                if angle < 0.0:
-                    angle += 2.0 * math.pi
-                return angle
             reflection_list.sort(key=SortKey)
             # Any 2 consecutive axes should be as close in angle between each other as possible.
             reflection_a = reflection_list[0]['reflection']
@@ -114,10 +112,56 @@ class PointCloud(object):
             is_symmetry, total_error = self.IsSymmetry(cw_rotation)
             if not is_symmetry:
                 raise Exception('Failed to generate CW rotational symmetry.')
+        elif len(reflection_list) == 1:
+            # If we found exactly one reflection, then I believe the cloud has no rotational symmetry.
+            # Note that the identity transform is not considered a symmetry.
+            pass
+        else:
+            # If we found no reflective symmetry, the cloud may still have rotational symmetry.
+            # Furthermore, if it does, it must rotate about the average point.  I think there is a way
+            # to prove this using strong induction.  Note that the statement holds for all point-clouds
+            # made from vertices taken from regular polygons.  Now for any given point-cloud with any
+            # given rotational symmetry, consider 1 point of that cloud.  Removing that point along
+            # with the minimum number of other points necessary to keep the given rotational symmetry,
+            # we must remove points making up a regular polygon's vertices.  By inductive hypothesis,
+            # the remaining cloud has its average point at the center of the rotational symmetry.  Now
+            # see that adding the removed points back does not change the average point of the cloud.
+            # Is it true that every line of symmetry of the cloud contains the average point?  I believe
+            # the answer is yes.  Take any point-cloud with a reflective symmetry and consider all but
+            # 2 of its points that reflect into one another along that symmetry.  If the cloud were just
+            # these 2 points, then the average point is on the line of symmetry.  Now notice that as you
+            # add back points by pairs, each pair reflecting into one another, the average point of the
+            # cloud remains on the line of symmetry.
+            center_reflection_list.sort(key=SortKey)
+            found = False
+            for i in range(len(center_reflection_list)):
+                for j in range(i + 1, len(center_reflection_list)):
+                    ccw_rotation = center_reflection_list[i] * center_reflection_list[j]
+                    if self.IsSymmetry(ccw_rotation):
+                        # By stopping at the first one we find, we should be minimizing the angle of rotation.
+                        found = True
+                        break
+                if found:
+                    break
+            if found:
+                cw_rotation = ccw_rotation.Inverted()
+            else:
+                ccw_rotation = None
         
         return reflection_list, ccw_rotation, cw_rotation
     
+    def AveragePoint(self):
+        if len(self.point_list) == 0:
+            return None
+        avg_point = Vector(0.0, 0.0)
+        for point in self.point_list:
+            avg_point += point
+        avg_point *= 1.0 / float(len(self.point_list))
+        return avg_point
+    
     def IsSymmetry(self, symmetry_transform, epsilon=1e-7):
+        if(symmetry_transform.IsIdentity()):
+            return False
         point_cloud = PointCloud()
         for point in self.point_list:
             point = symmetry_transform(point)

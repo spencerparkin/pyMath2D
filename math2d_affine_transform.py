@@ -35,6 +35,11 @@ class AffineTransform(object):
         self.linear_transform.Identity()
         self.translation = Vector(0.0, 0.0)
     
+    def IsIdentity(self, epsilon=1e-7):
+        if not self.linear_transform.IsIdentity(epsilon):
+            return False
+        return True if self.translation.IsZero(epsilon) else False
+    
     def Transform(self, object):
         from math2d_polygon import Polygon
         from math2d_region import Region, SubRegion

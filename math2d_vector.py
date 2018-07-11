@@ -50,6 +50,9 @@ class Vector(object):
     def IsPoint(self, point, epsilon=1e-7):
         return True if (point - self).Length() < epsilon else False
     
+    def IsZero(self, epsilon=1e-7):
+        return self.IsPoint(Vector(0.0, 0.0), epsilon)
+    
     def Length(self):
         return math.sqrt(self.Dot(self))
     

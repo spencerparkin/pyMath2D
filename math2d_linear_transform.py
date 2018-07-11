@@ -31,6 +31,13 @@ class LinearTransform(object):
         self.x_axis = Vector(1.0, 0.0)
         self.y_axis = Vector(0.0, 1.0)
     
+    def IsIdentity(self, epsilon=1e-7):
+        if not self.x_axis.IsPoint(Vector(1.0, 0.0), epsilon):
+            return False
+        if not self.y_axis.IsPoint(Vector(0.0, 1.0), epsilon):
+            return False
+        return True
+    
     def Transform(self, object):
         if isinstance(object, Vector):
             return self.x_axis * object.x + self.y_axis * object.y
