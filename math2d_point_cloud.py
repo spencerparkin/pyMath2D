@@ -64,6 +64,10 @@ class PointCloud(object):
         # TODO: Write this.
     
     def GenerateSymmetries(self):
+
+        # TODO: Some shapes have rotational symmetry, but not reflective symmetry.
+        #       How do we find the rotational symmetry in that case?
+
         reflection_list = []
         for i in range(len(self.point_list)):
             for j in range(i + 1, len(self.point_list)):
