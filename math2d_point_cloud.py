@@ -67,6 +67,9 @@ class PointCloud(object):
 
         # TODO: Some shapes have rotational symmetry, but not reflective symmetry.
         #       How do we find the rotational symmetry in that case?
+        #       Okay, here's an idea.  Proceed to perform double-reflections of the shape
+        #       based on 2 pairs of points from the shape.  We can reduce the search space
+        #       by only considering pairs of points that are opposite about the center of the shape.
 
         reflection_list = []
         for i in range(len(self.point_list)):
