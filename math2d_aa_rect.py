@@ -35,9 +35,12 @@ class AxisAlignedRectangle(object):
         y = self.min_point.y + v * (self.max_point.y - self.min_point.y)
         return Vector(x, y)
 
-    def Map(self, point, rectangle):
-        u, v = self.CalcUVs(point)
-        return rectangle.ApplyUVs(u, v)
+    def Map(self, thing, rectangle):
+        if isinstance(thing, Vector):
+            u, v = self.CalcUVs(thing)
+            return rectangle.ApplyUVs(u, v)
+        elif isinstance(thing, LineSegment):
+            return LineSegment(self.Map(thing.point_a, rectangle), self.Map(thing.point_b, rectangle))
 
     def Width(self):
         return self.max_point.x - self.min_point.x

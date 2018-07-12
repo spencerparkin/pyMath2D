@@ -16,10 +16,14 @@ class Region(object):
         return copy.deepcopy(self)
 
     def Serialize(self):
-        pass
+        json_data = {
+            'sub_region_list': [sub_region.Serialize() for sub_region in self.sub_region_list]
+        }
+        return json_data
     
     def Deserialize(self, json_data):
-        pass
+        self.sub_region_list = [SubRegion().Deserialize(sub_region) for sub_region in json_data['sub_region_list']]
+        return self
 
     def Tessellate(self):
         for sub_region in self.sub_region_list:
@@ -74,10 +78,16 @@ class SubRegion(object):
         return copy.deepcopy(self)
 
     def Serialize(self):
-        pass
+        json_data = {
+            'border_polygon': self.polygon.Serialize(),
+            'hole_list': [hole.Serialize() for hole in self.hole_list]
+        }
+        return json_data
 
     def Deserialize(self, json_data):
-        pass
+        self.polygon = Polygon().Deserialize(json_data['border_polygon'])
+        self.hole_list = [Polygon().Deserialize(hole) for hole in json_data['hole_list']]
+        return self
 
     def GeneratePolygon(self):
         # Return a polygon covering the same area as this sub-region.

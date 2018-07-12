@@ -19,10 +19,14 @@ class Polygon(object):
         return copy.deepcopy(self)
     
     def Serialize(self):
-        pass
+        json_data = {
+            'vertex_list': [vertex.Serialize() for vertex in self.vertex_list]
+        }
+        return json_data
 
     def Deserialize(self, json_data):
-        pass
+        self.vertex_list = [Vector().Deserialize(vertex) for vertex in json_data['vertex_list']]
+        return self
 
     def AverageVertex(self):
         avg_vertex = Vector(0.0, 0.0)
