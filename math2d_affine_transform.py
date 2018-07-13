@@ -94,7 +94,7 @@ class AffineTransform(object):
         rotation = AffineTransform()
         rotation.linear_transform.Rotation(angle)
         transform = translation_b * rotation * translation_a
-        self.linear_tranfsorm = transform.linear_transform
+        self.linear_transform = transform.linear_transform
         self.translation = transform.translation
     
     def Reflection(self, center, vector):

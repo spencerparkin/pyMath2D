@@ -91,8 +91,11 @@ class PointCloud(object):
         # Rotations are just double-reflections.  We return here a CCW rotational symmetry that generates
         # the sub-group of rotational symmetries of the overall group of symmetries of the cloud.  We also
         # return its inverse for convenience.  Of course, not all point clouds have any rotational symmetry.
+        epsilon = 1e-7
         def SortKey(entry):
-            angle = entry['normal'].SignedAngleBetween(Vector(1.0, 0.0))
+            if entry['normal'].y <= -epsilon:
+                entry['normal'] = -entry['normal']
+            angle = Vector(1.0, 0.0).SignedAngleBetween(entry['normal'])
             if angle < 0.0:
                 angle += 2.0 * math.pi
             return angle
@@ -103,8 +106,8 @@ class PointCloud(object):
             # Any 2 consecutive axes should be as close in angle between each other as possible.
             reflection_a = reflection_list[0]['reflection']
             reflection_b = reflection_list[1]['reflection']
-            ccw_rotation = reflection_b * reflection_a
-            cw_rotation = reflection_a * reflection_b
+            ccw_rotation = reflection_a * reflection_b
+            cw_rotation = reflection_b * reflection_a
             # The following are just sanity checks.
             is_symmetry, total_error = self.IsSymmetry(ccw_rotation)
             if not is_symmetry:
@@ -136,7 +139,7 @@ class PointCloud(object):
             found = False
             for i in range(len(center_reflection_list)):
                 for j in range(i + 1, len(center_reflection_list)):
-                    ccw_rotation = center_reflection_list[j]['reflection'] * center_reflection_list[i]['reflection']
+                    ccw_rotation = center_reflection_list[i]['reflection'] * center_reflection_list[j]['reflection']
                     is_symmetry, total_error = self.IsSymmetry(ccw_rotation)
                     if is_symmetry:
                         # By stopping at the first one we find, we should be minimizing the angle of rotation.
