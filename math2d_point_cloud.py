@@ -136,8 +136,9 @@ class PointCloud(object):
             found = False
             for i in range(len(center_reflection_list)):
                 for j in range(i + 1, len(center_reflection_list)):
-                    ccw_rotation = center_reflection_list[i] * center_reflection_list[j]
-                    if self.IsSymmetry(ccw_rotation):
+                    ccw_rotation = center_reflection_list[j]['reflection'] * center_reflection_list[i]['reflection']
+                    is_symmetry, total_error = self.IsSymmetry(ccw_rotation)
+                    if is_symmetry:
                         # By stopping at the first one we find, we should be minimizing the angle of rotation.
                         found = True
                         break
@@ -161,7 +162,7 @@ class PointCloud(object):
     
     def IsSymmetry(self, symmetry_transform, epsilon=1e-7):
         if(symmetry_transform.IsIdentity()):
-            return False
+            return False, None
         point_cloud = PointCloud()
         for point in self.point_list:
             point = symmetry_transform(point)
