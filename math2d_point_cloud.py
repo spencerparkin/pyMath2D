@@ -58,6 +58,18 @@ class PointCloud(object):
                 return i
         return None
     
+    def FindNearestPoints(self, given_point, epsilon=1e-7):
+        nearest_points = []
+        smallest_distance = 999999.0
+        for i, point in enumerate(self.point_list):
+            distance = (point - given_point).Length()
+            if math.fabs(distance - smallest_distance) < epsilon:
+                nearest_points.append(i)
+            elif distance < smallest_distance:
+                nearest_points = []
+                smallest_distance = distance
+        return nearest_points, smallest_distance
+    
     def GenerateConvexHull(self):
         from math2d_polygon import Polygon
         pass
