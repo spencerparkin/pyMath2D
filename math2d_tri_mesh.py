@@ -63,6 +63,10 @@ class TriangleMesh(object):
             self.triangle_list.append(given_triple)
             return len(self.triangle_list) - 1
     
+    def AddMesh(self, mesh):
+        for triangle in mesh.GenerateTriangles():
+            self.AddTriangle(triangle)
+    
     def GenerateTriangles(self):
         for triple in self.triangle_list:
             yield self.MakeTriangleFromTriple(triple)

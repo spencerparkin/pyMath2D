@@ -4,6 +4,7 @@ import copy
 import math
 
 from math2d_line_segment import LineSegment
+from math2d_vector import Vector
 
 class PlanarGraphEdgeLabel:
     NONE = 0
@@ -231,13 +232,19 @@ class PlanarGraph(object):
     def EdgeSegment(self, edge):
         return LineSegment(self.vertex_list[edge[0]], self.vertex_list[edge[1]])
     
-    def FindAllAdjacencies(self, i, ignore_direction=False):
+    def FindAllAdjacencies(self, i, ignore_direction=False, vertices=False):
         adjacency_list = []
         for edge in self.edge_list:
             if edge[0] == i:
-                adjacency_list.append(edge)
+                if vertices:
+                    adjacency_list.append(edge[1])
+                else:
+                    adjacency_list.append(edge)
             elif ignore_direction and edge[1] == i:
-                adjacency_list.append(edge)
+                if vertices:
+                    adjacency_list.append(edge[0])
+                else:
+                    adjacency_list.append(edge)
         return adjacency_list
 
     def GeneratePolygonCycles(self, epsilon=1e-7):
@@ -317,3 +324,72 @@ class PlanarGraph(object):
                 glVertex2f(point.x, point.y)
         finally:
             glEnd()'''
+    
+    def GenerateLineMesh(self, thickness=0.5, epsilon=1e-7):
+        half_thickness = thickness / 2.0
+        from math2d_tri_mesh import TriangleMesh, Triangle
+        from math2d_polygon import Polygon
+        from math2d_affine_transform import AffineTransform
+        mesh = TriangleMesh()
+        def SortKey(vector):
+            angle = Vector(1.0, 0.0).SignedAngleBetween(vector)
+            if angle < 0.0:
+                angle += 2.0 * math.pi
+            return angle
+        polygon_list = []
+        for i in range(len(self.vertex_list)):
+            center = self.vertex_list[i]
+            vector_list = []
+            adj_list = self.FindAllAdjacencies(i, ignore_direction=True, vertices=True)
+            for j in adj_list:
+                vector_list.append(self.vertex_list[j] - center)
+            vector_list.sort(key=SortKey)
+            polygon = Polygon()
+            for j in range(len(vector_list)):
+                vector_a = vector_list[j]
+                vector_b = vector_list[(j + 1) % len(vector_list)]
+                angle = vector_a.SignedAngleBetween(vector_b)
+                if angle < 0.0:
+                    angle += 2.0 * math.pi
+                if math.fabs(angle - math.pi) < epsilon or angle < math.pi:
+                    affine_transform = AffineTransform()
+                    affine_transform.translation = center
+                    affine_transform.linear_transform.x_axis = vector_a.Normalized()
+                    affine_transform.linear_transform.y_axis = affine_transform.linear_transform.x_axis.RotatedCCW90()
+                    if math.fabs(angle - math.pi) < epsilon:
+                        length = 0.0
+                    else:
+                        length = half_thickness / math.tan(angle / 2.0)
+                    point = affine_transform * Vector(length, half_thickness)
+                    polygon.vertex_list.append(point)
+                else:
+                    # Here we might create a rounded joint or something fancy, but this is good for now.
+                    polygon.vertex_list.append(vector_a.Normalized().RotatedCCW90().Scaled(half_thickness) + center)
+                    polygon.vertex_list.append(vector_b.Normalized().RotatedCW90().Scaled(half_thickness) + center)
+            polygon.Tessellate()
+            mesh.AddMesh(polygon.mesh)
+            polygon_list.append(polygon)
+        for edge in self.edge_list:
+            center_a = self.vertex_list[edge[0]]
+            center_b = self.vertex_list[edge[1]]
+            line_segment = LineSegment(center_a, center_b)
+            def FindEdgeSegment(polygon):
+                for edge_segment in polygon.GenerateLineSegments():
+                    point = edge_segment.IntersectWith(line_segment)
+                    if point is not None:
+                        return edge_segment
+                else:
+                    raise Exception('Failed to find line quad end.')
+            polygon_a = polygon_list[edge[0]]
+            polygon_b = polygon_list[edge[1]]
+            edge_segment_a = FindEdgeSegment(polygon_a)
+            edge_segment_b = FindEdgeSegment(polygon_b)
+            triangle_a = Triangle(edge_segment_a.point_a, edge_segment_b.point_b, edge_segment_b.point_a)
+            triangle_b = Triangle(edge_segment_a.point_a, edge_segment_b.point_a, edge_segment_a.point_b)
+            area_a = triangle_a.Area()
+            area_b = triangle_b.Area()
+            if area_a < 0.0 or area_b < 0.0:
+                raise Exception('Miscalculated line quad triangles.')
+            mesh.AddTriangle(triangle_a)
+            mesh.AddTriangle(triangle_b)
+        return mesh

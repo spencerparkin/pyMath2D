@@ -42,6 +42,12 @@ class Region(object):
                 mesh.AddTriangle(triangle)
         return mesh
     
+    def GenerateLineMesh(self, thickness=0.5):
+        from math2d_planar_graph import PlanarGraph
+        graph = PlanarGraph()
+        graph.Add(self)
+        return graph.GenerateLineMesh(thickness)
+    
     def ContainsPoint(self, point, epsilon=1e-7):
         for sub_region in self.sub_region_list:
             if sub_region.ContainsPoint(point, epsilon):
