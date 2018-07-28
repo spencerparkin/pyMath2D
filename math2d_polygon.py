@@ -109,7 +109,14 @@ class Polygon(object):
         return not self.IsConcave()
     
     def IsConcave(self):
-        pass # TODO: Can we find an edge who's line is straddled by the polygon?
+        from math2d_point_cloud import PointCloud
+        point_cloud = PointCloud()
+        point_cloud.Add(self)
+        for line in self.GenerateLines():
+            point_cloud_back, point_cloud_front, point_cloud_neither = point_cloud.Split(line)
+            if point_cloud_back.Size() > 0 and point_cloud_front.Size() > 0:
+                return True
+        return False
     
     def RemoveRedundantVertices(self, epsilon=1e-7):
         if len(self.vertex_list) >= 3:
