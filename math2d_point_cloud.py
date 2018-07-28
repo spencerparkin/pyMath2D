@@ -1,6 +1,7 @@
 # math2d_point_cloud.py
 
 import math
+import random
 
 from math2d_vector import Vector
 from math2d_line_segment import LineSegment
@@ -71,10 +72,83 @@ class PointCloud(object):
         return nearest_points, smallest_distance
     
     def GenerateConvexHull(self):
+        # TODO: This algorithm has yet to be tested.
+        from math2d_line import Line
         from math2d_polygon import Polygon
-        pass
-        # TODO: Write this.
-    
+        from math2d_triangle import Triangle
+        found = False
+        for i in range(len(self.point_list)):
+            for j in range(len(self.point_list)):
+                if j == i:
+                    continue
+                for k in range(len(self.point_list)):
+                    if k == i or k == j:
+                        continue
+                    triangle = Triangle(self.point_list[i], self.point_list[j], self.point_list[j])
+                    if triangle.Area() > 0.0:
+                        found = True
+                        break
+                if found:
+                    break
+            if found:
+                break
+        if not found:
+            raise Exception('Failed to find initial triangle.')
+        polygon = Polygon()
+        polygon.vertex_list = [triangle.vertex_a, triangle.vertex_b, triangle.vertex_c]
+        point_list = [point for point in self.point_list]
+        while True:
+            new_point_list = []
+            for point in point_list:
+                if not polygon.ContainsPoint(point, assume_convex=True):
+                    new_point_list.append(point)
+            point_list = new_point_list
+            if len(point_list) == 0:
+                break
+            # Perhaps randomly choosing a point will help us terminate quicker on average?
+            point = random.choice(point_list)
+            point_cloud = PointCloud()
+            point_cloud.Add(polygon)
+            j = None
+            k = None
+            for i in range(len(polygon.vertex_list)):
+                vertex = polygon.vertex_list[i]
+                line = Line()
+                line.MakeForPoints(point, vertex)
+                point_cloud_back, point_cloud_front, point_cloud_neither = point_cloud.Split(line)
+                if point_cloud_front.Size() == 0:
+                    j = i
+                if point_cloud_back.Size() == 0:
+                    k = i
+                if j is not None and k is not None:
+                    break
+            else:
+                raise Exception('Failed to determine how to add point to convex hull.')
+            new_vertex_list = [point]
+            i = k
+            while True:
+                new_vertex_list.append(polygon.vertex_list[i])
+                if i == j:
+                    break
+                i = (i + 1) % len(polygon.vertex_list)
+            polygon.vertex_list = new_vertex_list
+        return polygon
+
+    def Split(self, line, epsilon=1e-7):
+        from math2d_line import Line
+        point_cloud_back = PointCloud()
+        point_cloud_front = PointCloud()
+        point_cloud_neither = PointCloud()
+        for point in self.point_list:
+            side = line.CalcSide(epsilon)
+            if side == Line.Side_BACK:
+                point_cloud_back.Add(point)
+            elif side == Line.SIDE_FRONT:
+                point_cloud_front.Add(point)
+            elif side == Line.SIDE_NEITHER:
+                point_cloud_neither.Add(point)
+        return point_cloud_back, point_cloud_front, point_cloud_neither
+
     def GenerateSymmetries(self):
         reflection_list = []
         center_reflection_list = []

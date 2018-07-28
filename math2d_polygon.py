@@ -133,8 +133,18 @@ class Polygon(object):
     def Area(self):
         return self.mesh.Area()
     
-    def ContainsPoint(self, point, epsilon=1e-7):
-        return self.mesh.ContainsPoint(point, epsilon)
+    def ContainsPoint(self, point, epsilon=1e-7, assume_convex=False):
+        if assume_convex:
+            from math2d_line import Line
+            for line in self.GenerateLines():
+                side = line.CalcSide(point, epsilon)
+                if side != Line.SIDE_FRONT:
+                    return False
+            return True
+        elif self.mesh is not None:
+            return self.mesh.ContainsPoint(point, epsilon)
+        else:
+            raise Exception('Can\'t determine if polygon contains point.')
 
     def ContainsPointOnBorder(self, point, epsilon=1e-7):
         for line in self.GenerateLineSegments():
@@ -177,7 +187,18 @@ class Polygon(object):
             j = (i + 1) % len(self.vertex_list)
             line_segment = LineSegment(self.vertex_list[i], self.vertex_list[j])
             yield line_segment
-    
+
+    def GenerateLines(self):
+        # Note that the front of the line will be outside the polygon,
+        # and the back of the line will be inside the polygon.
+        # This doesn't quite hold in some self-tangential cases, but...
+        from math2d_line import Line
+        for i in range(len(self.vertex_list)):
+            j = (i + 1) % len(self.vertex_list)
+            line = Line()
+            line.MakeForPoints(self.vertex_list[j], self.vertex_list[i])
+            yield line
+
     def IsSymmetry(self, transform):
         polygon = transform * self
         for vertex in self.vertex_list:
