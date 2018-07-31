@@ -15,6 +15,9 @@ class LineSegment(object):
     def Direction(self):
         return self.point_b - self.point_a
     
+    def Length(self):
+        return self.Direction().Length()
+    
     def Lerp(self, lerp_value):
         return self.point_a + (self.point_b - self.point_a) * lerp_value
     
@@ -56,3 +59,15 @@ class LineSegment(object):
                     return point
                 else:
                     return None
+    
+    def Distance(self, point):
+        vector = (self.point_b - self.point_a).Normalized()
+        length = (point - self.point_a).Dot(vector)
+        if length < 0.0:
+            distance = (point - self.point_a).Length()
+        elif length > self.Length():
+            distance = (point - self.point_b).Length()
+        else:
+            hypotenuse = (point - self.point_a).Length()
+            distance = math.sqrt(hypotenuse * hypotenuse - length * length)
+        return distance
