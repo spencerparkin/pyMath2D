@@ -69,5 +69,5 @@ class LineSegment(object):
             distance = (point - self.point_b).Length()
         else:
             hypotenuse = (point - self.point_a).Length()
-            distance = math.sqrt(hypotenuse * hypotenuse - length * length)
+            distance = math.sqrt(math.fabs(hypotenuse * hypotenuse - length * length))
         return distance
