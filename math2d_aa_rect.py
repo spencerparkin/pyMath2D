@@ -64,7 +64,7 @@ class AxisAlignedRectangle(object):
         else:
             delta_width = (rectangle.Width() * self.Height() / rectangle.Height() - self.Width()) / 2.0
             self.min_point.x -= delta_width
-            self.min_point.y += delta_width
+            self.min_point.x += delta_width
 
     def ContractToMatchAspectRatioOf(self, rectangle):
         aspect_ratio_a = self.AspectRatio()
