@@ -109,6 +109,10 @@ class AxisAlignedRectangle(object):
         elif isinstance(object, LineSegment):
             self.GrowFor(object.point_a)
             self.GrowFor(object.point_b)
+        elif isinstance(object, AxisAlignedRectangle):
+            self.GrowFor(object.GeneratePolygon())
+        else:
+            raise Exception('Failed to grow for "%s"' + str(object))
 
     def Scale(self, scale_factor):
         center = self.Center()
