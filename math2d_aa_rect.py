@@ -10,7 +10,7 @@ class AxisAlignedRectangle(object):
         self.min_point = min_point if min_point is not None else Vector(0.0, 0.0)
         self.max_point = max_point if max_point is not None else Vector(0.0, 0.0)
 
-    def Clone(self):
+    def Copy(self):
         return copy.deepcopy(self)
     
     def Serialize(self):

@@ -35,10 +35,14 @@ class Polygon(object):
         avg_vertex = avg_vertex / float(len(self.vertex_list))
         return avg_vertex
 
-    def MakeRegularPolygon(self, sides, radius=1.0):
+    def MakeRegularPolygon(self, sides, radius=1.0, center=None):
         for i in range(sides):
             point = Vector(angle=2.0 * math.pi * float(i) / float(sides), radius=radius)
-            self.vertex_list.append(point)
+            if center is None:
+                self.vertex_list.append(point)
+            else:
+                self.vertex_list.append(point + center)
+        return self
     
     def Tessellate(self):
         # Note that it is up to the caller to know when and if we need to recalculate this mesh, which some methods depend upon.
