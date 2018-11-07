@@ -12,7 +12,7 @@ class Line(object):
     # Unlike a ray, the normal points orthogonal (perpendicular) to the line, not parallel to it.
     # Unlike a line-segment, these have infinite length, like a ray.  Rays are for hitting, while
     # these are the 2-dimensional analog of planes in 3D space that have front and back spaces.
-    def __init__(self, center, normal):
+    def __init__(self, center=None, normal=None):
         self.center = center if center is not None else Vector(0.0, 0.0)
         self.normal = normal if normal is not None else Vector(1.0, 0.0)
     

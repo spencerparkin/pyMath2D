@@ -61,13 +61,14 @@ class LineSegment(object):
                     return None
     
     def Distance(self, point):
+        return (point - self.ClosestPoint(point)).Length()
+    
+    def ClosestPoint(self, point):
         vector = (self.point_b - self.point_a).Normalized()
         length = (point - self.point_a).Dot(vector)
         if length < 0.0:
-            distance = (point - self.point_a).Length()
+            return self.point_a
         elif length > self.Length():
-            distance = (point - self.point_b).Length()
+            return self.point_b
         else:
-            hypotenuse = (point - self.point_a).Length()
-            distance = math.sqrt(math.fabs(hypotenuse * hypotenuse - length * length))
-        return distance
+            return self.point_a + vector * length

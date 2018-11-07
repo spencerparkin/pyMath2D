@@ -1,6 +1,7 @@
 # math2d_aa_rect.py
 
 import copy
+import random
 
 from math2d_vector import Vector
 from math2d_line_segment import LineSegment
@@ -24,6 +25,11 @@ class AxisAlignedRectangle(object):
         self.min_point = Vector().Deserialize(json_data['min_point'])
         self.max_point = Vector().Deserialize(json_data['max_point'])
         return self
+
+    def RandomPoint(self):
+        u = random.uniform(0.0, 1.0)
+        v = random.uniform(0.0, 1.0)
+        return self.ApplyUVs(u, v)
     
     def CalcUVs(self, point):
         u = (point.x - self.min_point.x) / (self.max_point.x - self.min_point.x)
