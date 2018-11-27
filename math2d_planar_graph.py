@@ -123,6 +123,18 @@ class PlanarGraph(object):
             else:
                 self.edge_list.append(new_edge)
     
+    def RemoveVertex(self, i):
+        if isinstance(i, Vector):
+            i = self.FindVertex(i)
+        del self.vertex_list[i]
+        self.edge_list = [edge for edge in self.edge_list if edge[0] != i and edge[1] != i]
+        for j, edge in enumerate(self.edge_list):
+            self.edge_list[j] = (
+                edge[0] - 1 if edge[0] > i else edge[0],
+                edge[1] - 1 if edge[1] > i else edge[1],
+                edge[2]
+            )
+                    
     def ApplyCuts(self, region):
         # Turn all the cuts into bi-directional borders.  Discard cuts that don't cut anything.
         region.Tessellate()

@@ -225,6 +225,40 @@ class Polygon(object):
                 return i
         return None
     
+    def IntersectWith(self, polygon):
+        from math2d_planar_graph import PlanarGraph
+        polygon_list = []
+        self.Tessellate()
+        graph = PlanarGraph()
+        graph.Add(polygon)
+        graph.Add(self, disposition={'replace_edges': True})
+        while True:
+            for i, vertex in enumerate(graph.vertex_list):
+                if self.ContainsPoint(vertex) and polygon.ContainsPoint(vertex):
+                    break
+            else:
+                break
+            intersect_polygon = Polygon()
+            polygon_list.append(intersect_polygon)
+            visited_vertices = set()
+            while True:
+                visited_vertices.add(i)
+                vertex = graph.vertex_list[i]
+                intersect_polygon.vertex_list.append(vertex)
+                adjacency_list = graph.FindAllAdjacencies(i, ignore_direction=True, vertices=True)
+                for i in adjacency_list:
+                    if i not in visited_vertices:
+                        vertex = graph.vertex_list[i]
+                        if self.ContainsPoint(vertex) and polygon.ContainsPoint(vertex):
+                            break
+                else:
+                    break
+            if not intersect_polygon.IsWoundCCW():
+                intersect_polygon.ReverseWinding()
+            for vertex in intersect_polygon.vertex_list:
+                graph.RemoveVertex(vertex)
+        return polygon_list
+    
     def Render(self):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, GL_LINE_LOOP
         glBegin(GL_LINE_LOOP)

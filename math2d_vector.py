@@ -126,6 +126,10 @@ class Vector(object):
         angle = self.AngleBetween(vector)
         return angle if self.Cross(vector) >= 0.0 else -angle
 
+    def Heading(self):
+        angle = math.atan2(self.y, self.x)
+        return angle
+
     def Render(self, point, arrow_head_length=0.3):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, GL_LINES
         from math2d_affine_transform import AffineTransform

@@ -25,6 +25,9 @@ class Region(object):
         self.sub_region_list = [SubRegion().Deserialize(sub_region) for sub_region in json_data['sub_region_list']]
         return self
 
+    def Area(self):
+        return sum([sub_region.Area() for sub_region in self.sub_region_list])
+
     def Tessellate(self):
         for sub_region in self.sub_region_list:
             sub_region.Tessellate()
@@ -67,6 +70,12 @@ class Region(object):
         graph.Add(other, {'edge_label': PlanarGraphEdgeLabel.CUT})
         return graph.ApplyCuts(self)
     
+    def Intersect(self, region_a, region_b):
+        pass # This is an interesting problem for another day.
+    
+    def Union(self, region_a, region_b):
+        pass # This is an interesting problem for another day.
+    
     def Render(self):
         for sub_region in self.sub_region_list:
             sub_region.Render()
@@ -94,6 +103,13 @@ class SubRegion(object):
         self.polygon = Polygon().Deserialize(json_data['border_polygon'])
         self.hole_list = [Polygon().Deserialize(hole) for hole in json_data['hole_list']]
         return self
+
+    def Area(self):
+        # We could return self.GeneratePolygon().Area(), but it's faster to do the following.
+        area = self.polygon.Area()
+        for hole in self.hole_list:
+            area -= hole.Area()
+        return area
 
     def GeneratePolygon(self):
         # Return a polygon covering the same area as this sub-region.
