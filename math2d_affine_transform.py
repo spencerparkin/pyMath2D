@@ -43,6 +43,7 @@ class AffineTransform(object):
     def Transform(self, object):
         from math2d_polygon import Polygon
         from math2d_region import Region, SubRegion
+        from math2d_aa_rect import AxisAlignedRectangle
         if isinstance(object, Vector):
             return self.linear_transform.Transform(object) + self.translation
         elif isinstance(object, AffineTransform):
@@ -69,6 +70,8 @@ class AffineTransform(object):
             for hole in object.hole_list:
                 sub_region.hole_list.append(self.Transform(hole))
             return sub_region
+        elif isinstance(object, AxisAlignedRectangle):
+            return AxisAlignedRectangle(min_point=self.Transform(object.min_point), max_point=self.Transform(object.max_point))
     
     def __call__(self, object):
         return self.Transform(object)
