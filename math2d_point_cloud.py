@@ -72,7 +72,6 @@ class PointCloud(object):
         return nearest_points, smallest_distance
     
     def GenerateConvexHull(self):
-        # TODO: This algorithm has yet to be tested.
         from math2d_line import Line
         from math2d_polygon import Polygon
         from math2d_triangle import Triangle
@@ -84,7 +83,7 @@ class PointCloud(object):
                 for k in range(len(self.point_list)):
                     if k == i or k == j:
                         continue
-                    triangle = Triangle(self.point_list[i], self.point_list[j], self.point_list[j])
+                    triangle = Triangle(self.point_list[i], self.point_list[j], self.point_list[k])
                     if triangle.Area() > 0.0:
                         found = True
                         break
@@ -97,6 +96,7 @@ class PointCloud(object):
         polygon = Polygon()
         polygon.vertex_list = [triangle.vertex_a, triangle.vertex_b, triangle.vertex_c]
         point_list = [point for point in self.point_list]
+        random.seed(0)
         while True:
             new_point_list = []
             for point in point_list:
@@ -120,7 +120,7 @@ class PointCloud(object):
                     j = i
                 if point_cloud_back.Size() == 0:
                     k = i
-                if j is not None and k is not None:
+                if j is not None and k is not None and j != k:
                     break
             else:
                 raise Exception('Failed to determine how to add point to convex hull.')
@@ -140,8 +140,8 @@ class PointCloud(object):
         point_cloud_front = PointCloud()
         point_cloud_neither = PointCloud()
         for point in self.point_list:
-            side = line.CalcSide(epsilon)
-            if side == Line.Side_BACK:
+            side = line.CalcSide(point, epsilon=epsilon)
+            if side == Line.SIDE_BACK:
                 point_cloud_back.Add(point)
             elif side == Line.SIDE_FRONT:
                 point_cloud_front.Add(point)
@@ -257,3 +257,14 @@ class PointCloud(object):
             point = symmetry_transform(point)
             point_cloud.Add(point)
         return self.IsPointCloud(point_cloud, epsilon)
+
+    def Render(self):
+        from OpenGL.GL import glBegin, glEnd, glVertex2f, GL_POINTS, glPointSize
+        glBegin(GL_POINTS)
+        #glPointSize(3.0)
+        try:
+            for i in range(len(self.point_list)):
+                point = self.point_list[i]
+                glVertex2f(point.x, point.y)
+        finally:
+            glEnd()

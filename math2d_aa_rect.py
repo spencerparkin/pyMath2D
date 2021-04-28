@@ -89,8 +89,10 @@ class AxisAlignedRectangle(object):
 
     def GrowFor(self, object):
         from math2d_polygon import Polygon
+        from math2d_polyline import Polyline
         from math2d_region import Region, SubRegion
         from math2d_planar_graph import PlanarGraph
+        from math2d_spline import Spline
         if isinstance(object, Vector):
             # Minimally grow the rectangle to include the given point.
             if self.min_point.x > object.x:
@@ -101,7 +103,7 @@ class AxisAlignedRectangle(object):
                 self.min_point.y = object.y
             if self.max_point.y < object.y:
                 self.max_point.y = object.y
-        elif isinstance(object, Polygon):
+        elif isinstance(object, Polygon) or isinstance(object, Polyline):
             for vertex in object.vertex_list:
                 self.GrowFor(vertex)
         elif isinstance(object, Region):
@@ -117,8 +119,39 @@ class AxisAlignedRectangle(object):
             self.GrowFor(object.point_b)
         elif isinstance(object, AxisAlignedRectangle):
             self.GrowFor(object.GeneratePolygon())
+        elif isinstance(object, Spline):
+            for point in object.point_list:
+                self.GrowFor(point)
+        elif isinstance(object, AxisAlignedRectangle):
+            self.GrowFor(object.point_a)
+            self.GrowFor(object.point_b)
+        elif type(object) is list:
+            for sub_object in object:
+                self.GrowFor(sub_object)
         else:
             raise Exception('Failed to grow for "%s"' + str(object))
+
+    def MakeUnionOf(self, rect_a, rect_b):
+        # Of course, the union of two AA rectangles is not necessarily
+        # another AA rectangle.  Rather, here we calculate the smallest
+        # AA rect containing both given AA rects.
+        self.min_point = rect_a.min_point.MinComponents(rect_b.min_point)
+        self.max_point = rect_a.max_point.MaxComponents(rect_b.max_point)
+        return self.IsValid()
+
+    def MakeIntersectionOf(self, rect_a, rect_b):
+        # If the AA rects don't actually intersect, the result here
+        # is left undefined, and we return false.
+        self.min_point = rect_a.min_point.MaxComponents(rect_b.min_point)
+        self.max_point = rect_b.max_point.MinComponents(rect_b.max_point)
+        return self.IsValid()
+
+    def IsValid(self):
+        if self.min_point.x > self.max_point.x:
+            return False
+        if self.min_point.y > self.max_point.y:
+            return False
+        return True
 
     def Scale(self, scale_factor):
         center = self.Center()

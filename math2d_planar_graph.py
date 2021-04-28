@@ -21,15 +21,24 @@ class PlanarGraph(object):
     def __init__(self):
         self.vertex_list = [] # For large graphs, points in a BSP tree would have been more efficient.
         self.edge_list = [] # Probably should have used a set for faster look-up times.
-    
+
+    def Clear(self):
+        self.vertex_list = []
+        self.edge_list = []
+
     def Copy(self):
         return copy.deepcopy(self)
 
     def Serialize(self):
-        pass
+        json_data = {}
+        json_data['edge_list'] = self.edge_list[:]
+        json_data['vertex_list'] = [vertex.Serialize() for vertex in self.vertex_list]
+        return json_data
 
     def Deserialize(self, json_data):
-        pass
+        self.edge_list = json_data['edge_list'][:]
+        self.vertex_list = [Vector().Deserialize(vertex_data) for vertex_data in json_data['vertex_list']]
+        return self
     
     def FindVertex(self, point, add_if_not_found=False, epsilon=1e-7):
         for i, vertex in enumerate(self.vertex_list):
@@ -50,61 +59,68 @@ class PlanarGraph(object):
             if edges_match and (ignore_label or edge[2] == given_edge[2]):
                 return i
         return None
-    
+
+    def FindEdges(self, i):
+        return [edge for edge in self.edge_list if edge[0] == i or edge[1] == i]
+
     def GenerateEdgeSegments(self):
         for edge in self.edge_list:
             yield self.EdgeSegment(edge)
     
-    def Add(self, other, disposition={}):
+    def Add(self, other, disposition={}, epsilon=1e-7, depth=0):
         from math2d_region import Region, SubRegion
         from math2d_polygon import Polygon
         from math2d_aa_rect import AxisAlignedRectangle
-        
-        if isinstance(other, PlanarGraph):
+
+        if type(other) is list:
+            for item in other:
+                self.Add(item, disposition, epsilon, depth + 1)
+
+        elif isinstance(other, PlanarGraph):
             for edge in other.edge_list:
                 line_segment = other.EdgeSegment(edge)
-                self.Add(line_segment, {**disposition, 'edge_label': edge[2]})
+                self.Add(line_segment, {**disposition, 'edge_label': edge[2]}, epsilon, depth + 1)
         
         elif isinstance(other, AxisAlignedRectangle):
             polygon = other.GeneratePolygon()
-            self.Add(polygon, disposition)
+            self.Add(polygon, disposition, epsilon, depth + 1)
         
         elif isinstance(other, Region):
             for sub_region in other.sub_region_list:
-                self.Add(sub_region, disposition)
+                self.Add(sub_region, disposition, epsilon, depth + 1)
                 
         elif isinstance(other, SubRegion):
             self.Add(other.polygon, disposition)
             for hole in other.hole_list:
-                self.Add(hole, {**disposition, 'flip_edge_direction': True})
+                self.Add(hole, {**disposition, 'flip_edge_direction': True}, epsilon, depth + 1)
                 
         elif isinstance(other, Polygon):
             for line_segment in other.GenerateLineSegments():
-                self.Add(line_segment, disposition)
+                self.Add(line_segment, disposition, epsilon, depth + 1)
                 
         elif isinstance(other, LineSegment):
             for vertex in self.vertex_list:
-                if other.ContainsPoint(vertex) and not other.IsEndPoint(vertex):
-                    self.Add(LineSegment(other.point_a, vertex), disposition)
-                    self.Add(LineSegment(vertex, other.point_b), disposition)
+                if other.ContainsPoint(vertex, epsilon) and not other.IsEndPoint(vertex, epsilon):
+                    self.Add(LineSegment(other.point_a, vertex), disposition, epsilon, depth + 1)
+                    self.Add(LineSegment(vertex, other.point_b), disposition, epsilon, depth + 1)
                     return
 
             for i, edge in enumerate(self.edge_list):
                 edge_segment = self.EdgeSegment(edge)
-                if not (other.IsEndPoint(edge_segment.point_a) or other.IsEndPoint(edge_segment.point_b)):
+                if not (other.IsEndPoint(edge_segment.point_a, epsilon) or other.IsEndPoint(edge_segment.point_b, epsilon)):
                     point = edge_segment.IntersectWith(other)
                     if point is not None:
                         if not edge_segment.IsEndPoint(point):
                             del self.edge_list[i]
-                            self.Add(LineSegment(edge_segment.point_a, point), {'edge_label': edge[2]})
-                            self.Add(LineSegment(point, edge_segment.point_b), {'edge_label': edge[2]})
+                            self.Add(LineSegment(edge_segment.point_a, point), {'edge_label': edge[2]}, epsilon, depth + 1)
+                            self.Add(LineSegment(point, edge_segment.point_b), {'edge_label': edge[2]}, epsilon, depth + 1)
                         if not other.IsEndPoint(point):
-                            self.Add(LineSegment(other.point_a, point), disposition)
-                            self.Add(LineSegment(point, other.point_b), disposition)
+                            self.Add(LineSegment(other.point_a, point), disposition, epsilon, depth + 1)
+                            self.Add(LineSegment(point, other.point_b), disposition, epsilon, depth + 1)
                             return
 
-            i = self.FindVertex(other.point_a, add_if_not_found=True)
-            j = self.FindVertex(other.point_b, add_if_not_found=True)
+            i = self.FindVertex(other.point_a, add_if_not_found=True, epsilon=epsilon)
+            j = self.FindVertex(other.point_b, add_if_not_found=True, epsilon=epsilon)
             label = disposition.get('edge_label', PlanarGraphEdgeLabel.NONE)
             if disposition.get('flip_edge_direction', False):
                 new_edge = (j, i, label)
@@ -315,7 +331,7 @@ class PlanarGraph(object):
             sub_graph_list.append(sub_graph)
         return sub_graph_list, dsf_set_list
 
-    def Render(self):
+    def Render(self, arrow_head_length=0.3):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, glColor3f, glPointSize, GL_POINTS
         for edge in self.edge_list:
             if edge[2] == PlanarGraphEdgeLabel.CUT:
@@ -326,16 +342,15 @@ class PlanarGraph(object):
                 glColor3f(1.0, 0.0, 0.0)
             vector = self.EdgeVector(edge)
             point = self.vertex_list[edge[0]]
-            vector.Render(point)
-        '''glPointSize(2.0)
+            vector.Render(point, arrow_head_length=arrow_head_length)
+        glPointSize(2.0)
         glBegin(GL_POINTS)
-        glColor3f(1.0, 1.0, 1.0)
         try:
             for point in self.vertex_list:
                 glColor3f(0.0, 0.0, 0.0)
                 glVertex2f(point.x, point.y)
         finally:
-            glEnd()'''
+            glEnd()
     
     def GenerateLineMesh(self, thickness=0.5, epsilon=1e-7):
         half_thickness = thickness / 2.0
@@ -405,3 +420,24 @@ class PlanarGraph(object):
             mesh.AddTriangle(triangle_a)
             mesh.AddTriangle(triangle_b)
         return mesh
+
+    def Reduce(self, epsilon=1e-7):
+        # Here we're removing all vertices of degree 2 where the incident
+        # edges are approximately co-linear.
+        keep_going = True
+        while keep_going:
+            keep_going = False
+            for i in range(len(self.vertex_list)):
+                adjacency_list = self.FindAllAdjacencies(i, ignore_direction=True, vertices=False)
+                if len(adjacency_list) == 2:
+                    edge_a = adjacency_list[0]
+                    edge_b = adjacency_list[1]
+                    point_a = self.vertex_list[edge_a[0]] if edge_a[0] != i else self.vertex_list[edge_a[1]]
+                    point_b = self.vertex_list[edge_b[0]] if edge_b[0] != i else self.vertex_list[edge_b[1]]
+                    line_seg = LineSegment(point_a=point_a, point_b=point_b)
+                    distance = line_seg.Distance(self.vertex_list[i])
+                    if distance < epsilon:
+                        self.RemoveVertex(i)
+                        self.Add(line_seg, disposition={}, epsilon=epsilon)
+                        keep_going = True
+                        break

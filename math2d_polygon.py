@@ -25,7 +25,7 @@ class Polygon(object):
         return json_data
 
     def Deserialize(self, json_data):
-        self.vertex_list = [Vector().Deserialize(vertex) for vertex in json_data['vertex_list']]
+        self.vertex_list = [Vector().Deserialize(vertex) for vertex in json_data.get('vertex_list', [])]
         return self
 
     def AverageVertex(self):
@@ -43,7 +43,42 @@ class Polygon(object):
             else:
                 self.vertex_list.append(point + center)
         return self
-    
+
+    def TessellateFast(self):
+        from math2d_tri_mesh import TriangleMesh
+        self.mesh = TriangleMesh()
+        self._TessellateFast(self.mesh)
+
+    def _TessellateFast(self, given_mesh):
+        # Hmmm...this is fast, but it does not correctly tessellate in some cases.
+        vertex_list_copy = self.vertex_list[:]
+        while len(vertex_list_copy) >= 3:
+            candidate_list = []
+            for i in range(len(vertex_list_copy)):
+                j = (i + 1) % len(vertex_list_copy)
+                k = (i + 2) % len(vertex_list_copy)
+                triangle = Triangle(vertex_list_copy[i], vertex_list_copy[j], vertex_list_copy[k])
+                area = triangle.Area()
+                if area >= 0.0:
+                    candidate_list.append((i, area))
+            if len(candidate_list) == 0:
+                raise Exception()
+            candidate_list.sort(key=lambda pair: pair[1], reverse=True)
+            found = False
+            for pair in candidate_list:
+                i = pair[0]
+                j = (i + 1) % len(vertex_list_copy)
+                k = (i + 2) % len(vertex_list_copy)
+                triangle = Triangle(vertex_list_copy[i], vertex_list_copy[j], vertex_list_copy[k])
+                # TODO: Here we need to vet the triangle.  Does a vertex go inside of it?  Does the polygon clip an edge of the polygon?  Etc.
+                #       If the triangle does not pass criteria, then go to the next candidate.
+                given_mesh.AddTriangle(triangle)
+                found = True
+                del vertex_list_copy[j]
+                break
+            if not found:
+                raise Exception()
+
     def Tessellate(self):
         # Note that it is up to the caller to know when and if we need to recalculate this mesh, which some methods depend upon.
         from math2d_tri_mesh import TriangleMesh
@@ -149,7 +184,7 @@ class Polygon(object):
             from math2d_line import Line
             for line in self.GenerateLines():
                 side = line.CalcSide(point, epsilon)
-                if side != Line.SIDE_FRONT:
+                if side == Line.SIDE_FRONT:
                     return False
             return True
         elif self.mesh is not None:
@@ -162,7 +197,36 @@ class Polygon(object):
             if line.ContainsPoint(point, epsilon):
                 return True
         return False
-    
+
+    def SplitLineSegment(self, given_line_segment, assume_convex=False):
+        # Chop up the given line segment against this polygon.
+        line_segment_list = []
+        queue = [given_line_segment.Copy()]
+        while len(queue) > 0:
+            line_segment = queue.pop()
+            for edge_segment in self.GenerateLineSegments():
+                point = line_segment.IntersectWith(edge_segment)
+                if point is not None and not line_segment.IsEndPoint(point):
+                    line_segment_a = LineSegment(point_a=line_segment.point_a, point_b=point)
+                    line_segment_b = LineSegment(point_a=point, point_b=line_segment.point_b)
+                    queue.append(line_segment_a)
+                    queue.append(line_segment_b)
+                    break
+            else:
+                line_segment_list.append(line_segment)
+
+        # Now bucket-sort the chopped-up parts into the correct list.
+        in_list = []
+        out_list = []
+        for line_segment in line_segment_list:
+            mid_point = line_segment.Lerp(0.5)
+            if self.ContainsPoint(mid_point, assume_convex=assume_convex):
+                in_list.append(line_segment)
+            else:
+                out_list.append(line_segment)
+
+        return in_list, out_list
+
     def Transform(self, transform, preserve_winding=True):
         for i, point in enumerate(self.vertex_list):
             self.vertex_list[i] = transform.Transform(point)
@@ -258,7 +322,7 @@ class Polygon(object):
             for vertex in intersect_polygon.vertex_list:
                 graph.RemoveVertex(vertex)
         return polygon_list
-    
+
     def Render(self):
         from OpenGL.GL import glBegin, glEnd, glVertex2f, GL_LINE_LOOP
         glBegin(GL_LINE_LOOP)

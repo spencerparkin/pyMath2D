@@ -106,11 +106,15 @@ class Vector(object):
     def Complex(self):
         return complex(self.x, self.y)
     
-    def AngleBetween(self, vector):
-        normal_vector_a = self.Copy()
-        normal_vector_a.Normalize()
-        normal_vector_b = vector.Copy()
-        normal_vector_b.Normalize()
+    def AngleBetween(self, vector, assume_unit_length=False):
+        if assume_unit_length:
+            normal_vector_a = self
+            normal_vector_b = vector
+        else:
+            normal_vector_a = self.Copy()
+            normal_vector_a.Normalize()
+            normal_vector_b = vector.Copy()
+            normal_vector_b.Normalize()
         dot = normal_vector_a.Dot(normal_vector_b)
         try:
             angle = math.acos(dot)
@@ -141,8 +145,9 @@ class Vector(object):
         line_segment_list = []
         head = Vector(self.Length(), 0.0)
         line_segment_list.append(LineSegment(Vector(0.0, 0.0), head))
-        line_segment_list.append(LineSegment(head, head + Vector(radius=arrow_head_length, angle=(7.0 / 8.0) * math.pi)))
-        line_segment_list.append(LineSegment(head, head + Vector(radius=arrow_head_length, angle=-(7.0 / 8.0) * math.pi)))
+        if arrow_head_length > 0.0:
+            line_segment_list.append(LineSegment(head, head + Vector(radius=arrow_head_length, angle=(7.0 / 8.0) * math.pi)))
+            line_segment_list.append(LineSegment(head, head + Vector(radius=arrow_head_length, angle=-(7.0 / 8.0) * math.pi)))
         glBegin(GL_LINES)
         try:
             for line_segment in line_segment_list:
@@ -156,3 +161,18 @@ class Vector(object):
         self.x = random.uniform(component_min, component_max)
         self.y = random.uniform(component_min, component_max)
         return self
+
+    @staticmethod
+    def Slerp(unit_vector_a, unit_vector_b, param):
+        angle = unit_vector_a.AngleBetween(unit_vector_b, assume_unit_length=True)
+        try:
+            vector = (math.sin((1.0 - param) * angle) * unit_vector_a + math.sin(param * angle) * unit_vector_b) / math.sin(angle)
+        except ZeroDivisionError:
+            vector = Vector(0.0, 0.0, 0.0)
+        return vector
+
+    def MaxComponents(self, vector):
+        return Vector(x=self.x if self.x > vector.x else vector.x, y=self.y if self.y > vector.y else vector.y)
+
+    def MinComponents(self, vector):
+        return Vector(x=self.x if self.x < vector.x else vector.x, y=self.y if self.y < vector.y else vector.y)
