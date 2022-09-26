@@ -85,6 +85,9 @@ class LineSegment(object):
         else:
             return self.point_a + vector * length
 
+    # TODO: I believe this algorithm, although it often returns the right result, is wrong.
+    #       I can think of a case where it fails.  Fix it.  Note that the divide and conqur
+    #       technique here is pointless and the "arbitrarily choose list B" thing is wrong.
     @staticmethod
     def ReduceLineList(given_line_list, epsilon):
         if len(given_line_list) < 2:
